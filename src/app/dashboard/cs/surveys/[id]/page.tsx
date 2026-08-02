@@ -724,39 +724,135 @@ export default function SurveyDetailPage() {
         <div className="space-y-4">
           {survey.responses.map((r) => {
             const answers: Record<string, string> = r.answers ? JSON.parse(r.answers) : {};
+            const ratingScores = questions
+              .map((q, i) => q.type === "rating" ? Number(answers[String(i)]) : null)
+              .filter((v): v is number => v !== null && !isNaN(v));
+            const avgScore = ratingScores.length > 0
+              ? ratingScores.reduce((a, b) => a + b, 0) / ratingScores.length : null;
+            const npsVal = questions.findIndex(q => q.type === "nps");
+            const npsScore = npsVal >= 0 ? Number(answers[String(npsVal)]) : r.nps;
+            const isRisk = (avgScore !== null && avgScore <= 2) || (npsScore !== null && npsScore <= 6);
+
             return (
-              <div key={r.id} className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-start justify-between mb-3">
+              <div key={r.id} className={`bg-white rounded-xl border p-5 ${isRisk ? "border-red-200" : "border-gray-200"}`}>
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <div className="font-medium text-gray-900">{r.respondentName || "Anonim"}</div>
-                    <div className="text-xs text-gray-400">{r.respondentEmail || "—"} · {formatDateTime(r.submittedAt)}</div>
+                    <div className="flex items-center gap-2">
+                      {isRisk && <span className="text-red-500 text-sm">⚠</span>}
+                      <span className="font-semibold text-gray-900">{r.respondentName || "Anonim"}</span>
+                      {r.respondentEmail && <span className="text-xs text-gray-400">{r.respondentEmail}</span>}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5">{formatDateTime(r.submittedAt)}</div>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
-                    {r.followUpStatus.replace("_", " ")}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    {avgScore !== null && (
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${avgScore <= 2 ? "text-red-600" : avgScore >= 4 ? "text-green-600" : "text-yellow-600"}`}>
+                          {avgScore.toFixed(1)}<span className="text-xs font-normal text-gray-400">/5</span>
+                        </div>
+                        <div className="text-xs text-gray-400">rata-rata</div>
+                      </div>
+                    )}
+                    {npsScore !== null && !isNaN(npsScore) && (
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${npsScore <= 6 ? "text-red-600" : npsScore >= 9 ? "text-green-600" : "text-yellow-600"}`}>
+                          {npsScore}<span className="text-xs font-normal text-gray-400">/10</span>
+                        </div>
+                        <div className="text-xs text-gray-400">NPS</div>
+                      </div>
+                    )}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
+                      {r.followUpStatus.replace("_", " ")}
+                    </span>
+                  </div>
                 </div>
-                {/* Dynamic answers */}
+
+                {/* Per-question answers */}
                 {Object.keys(answers).length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-3 border-t border-gray-100 pt-4">
                     {questions.map((q, i) => {
                       const val = answers[String(i)];
                       if (!val) return null;
+                      const numVal = Number(val);
+                      const isLow = q.type === "rating" && numVal <= 2;
+                      const isHigh = q.type === "rating" && numVal >= 4;
+                      const isNpsLow = q.type === "nps" && numVal <= 6;
+                      const isNpsHigh = q.type === "nps" && numVal >= 9;
+
                       return (
-                        <div key={i} className="flex gap-3 text-sm">
-                          <span className="text-gray-400 text-xs mt-0.5 w-4">{i + 1}.</span>
-                          <div>
-                            <div className="text-xs text-gray-500">{q.label}</div>
-                            <div className={`font-medium ${q.type === "rating" && Number(val) <= 2 ? "text-red-600" : q.type === "rating" && Number(val) >= 4 ? "text-green-600" : "text-gray-800"}`}>
-                              {q.type === "rating" ? `${val}/5` : q.type === "nps" ? `NPS: ${val}` : val}
+                        <div key={i} className={`rounded-lg p-3 ${isLow || isNpsLow ? "bg-red-50 border border-red-100" : "bg-gray-50"}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-gray-500 mb-1">
+                                <span className="font-medium text-gray-600">{i + 1}.</span> {q.label}
+                              </div>
+
+                              {/* Rating: show score bar */}
+                              {q.type === "rating" && (
+                                <div className="flex items-center gap-3">
+                                  <div className="flex gap-1">
+                                    {[1,2,3,4,5].map(s => (
+                                      <div key={s} className={`w-7 h-7 rounded flex items-center justify-center text-xs font-bold border-2 ${
+                                        s <= numVal
+                                          ? numVal <= 2 ? "bg-red-500 border-red-500 text-white"
+                                          : numVal <= 3 ? "bg-yellow-400 border-yellow-400 text-white"
+                                          : "bg-green-500 border-green-500 text-white"
+                                          : "border-gray-200 text-gray-300"
+                                      }`}>{s}</div>
+                                    ))}
+                                  </div>
+                                  <span className={`text-sm font-bold ${isLow ? "text-red-600" : isHigh ? "text-green-600" : "text-yellow-600"}`}>
+                                    {val}/5 {isLow ? "— Rendah" : isHigh ? "— Tinggi" : "— Sedang"}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* NPS: show colored score */}
+                              {q.type === "nps" && (
+                                <div className="flex items-center gap-3">
+                                  <div className="flex gap-0.5">
+                                    {[0,1,2,3,4,5,6,7,8,9,10].map(s => (
+                                      <div key={s} className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold ${
+                                        s === numVal
+                                          ? numVal <= 6 ? "bg-red-500 text-white"
+                                          : numVal <= 8 ? "bg-yellow-400 text-white"
+                                          : "bg-green-500 text-white"
+                                          : "bg-gray-100 text-gray-400"
+                                      }`}>{s}</div>
+                                    ))}
+                                  </div>
+                                  <span className={`text-sm font-bold ${isNpsLow ? "text-red-600" : isNpsHigh ? "text-green-600" : "text-yellow-600"}`}>
+                                    {isNpsLow ? "Detractor" : numVal <= 8 ? "Passive" : "Promoter"}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Select: show badge */}
+                              {q.type === "select" && (
+                                <span className="inline-block px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-700 font-medium">
+                                  {val}
+                                </span>
+                              )}
+
+                              {/* Text: show full answer */}
+                              {q.type === "text" && (
+                                <div className="text-sm text-gray-700 bg-white rounded border border-gray-200 px-3 py-2 italic">
+                                  "{val}"
+                                </div>
+                              )}
                             </div>
+
+                            {isLow && (
+                              <span className="flex-shrink-0 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">Perlu Perhatian</span>
+                            )}
                           </div>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  // Fallback for old responses
-                  <div className="text-sm text-gray-500 space-y-1">
+                  <div className="text-sm text-gray-500 space-y-1 border-t border-gray-100 pt-3">
                     {r.scoreOverall !== null && <div>Skor Overall: <strong>{r.scoreOverall}/5</strong></div>}
                     {r.nps !== null && <div>NPS: <strong>{r.nps}</strong></div>}
                     {r.comments && <div className="bg-gray-50 rounded-lg px-3 py-2 italic text-gray-600">"{r.comments}"</div>}
