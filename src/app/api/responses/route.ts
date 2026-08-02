@@ -20,6 +20,7 @@ export async function GET() {
       nps: responses.nps,
       improvementArea: responses.improvementArea,
       comments: responses.comments,
+      answers: responses.answers,
       followUpStatus: responses.followUpStatus,
       respondentName: responses.respondentName,
       respondentEmail: responses.respondentEmail,

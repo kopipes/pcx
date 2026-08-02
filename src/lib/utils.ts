@@ -31,33 +31,47 @@ export function isRiskResponse(response: {
   );
 }
 
-export function formatDate(date: Date | null | undefined): string {
-  if (!date) return "—";
+export function toDate(val: Date | string | number | null | undefined): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) return val;
+  if (typeof val === "number") {
+    // If it looks like seconds (Unix timestamp < year 3000 in seconds), convert to ms
+    return val < 9999999999 ? new Date(val * 1000) : new Date(val);
+  }
+  return new Date(val);
+}
+
+export function formatDate(date: Date | string | number | null | undefined): string {
+  const d = toDate(date);
+  if (!d) return "—";
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  }).format(date);
+  }).format(d);
 }
 
-export function formatDateTime(date: Date | null | undefined): string {
-  if (!date) return "—";
+export function formatDateTime(date: Date | string | number | null | undefined): string {
+  const d = toDate(date);
+  if (!d) return "—";
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date);
+  }).format(d);
 }
 
 export function getSlaStatus(
-  submittedAt: Date,
-  resolvedAt: Date | null
+  submittedAt: Date | string | number,
+  resolvedAt: Date | string | number | null
 ): "ok" | "warning" | "breached" {
   const now = new Date();
-  const deadline = new Date(submittedAt.getTime() + 2 * 24 * 60 * 60 * 1000);
-  if (resolvedAt) return "ok";
+  const sub = toDate(submittedAt)!;
+  const resolved = toDate(resolvedAt);
+  const deadline = new Date(sub.getTime() + 2 * 24 * 60 * 60 * 1000);
+  if (resolved) return "ok";
   if (now > deadline) return "breached";
   const hoursLeft = (deadline.getTime() - now.getTime()) / (1000 * 60 * 60);
   if (hoursLeft < 8) return "warning";
