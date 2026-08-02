@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 export type UserRole = "CS" | "PM" | "BU_HEAD" | "DIRECTOR" | "ADMIN";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
