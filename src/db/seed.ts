@@ -235,6 +235,51 @@ addQs(s6.id, [
   { type: "text",   label: "Fitur tambahan yang dibutuhkan di fase berikutnya", required: 0 },
 ], -7);
 
+const insertRecipient = sqlite.prepare("INSERT INTO survey_recipients (id, survey_id, name, email, token, token_hash, status, sent_at, submitted_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+const p7 = nanoid();
+insertProject.run(p7, "PT Retail Prima", "Digitalisasi Toko Online", buCreative, pm2Id, ts(35), ts(0));
+
+// ===== PROJECT 7: PT Retail Prima — survey with 2 named recipients, both submitted =====
+const s10 = makeSurvey(p7, csId, "COMPLETED", 8, "Survei post-launch toko online - multi penerima");
+const s10q = addQs(s10.id, [
+  { type: "rating", label: "Seberapa puas Anda dengan tampilan dan desain toko online yang dihasilkan?", required: 1 },
+  { type: "rating", label: "Apakah fitur-fitur toko online sudah sesuai dengan kebutuhan operasional Anda?", required: 1 },
+  { type: "rating", label: "Bagaimana performa dan kecepatan loading toko online?", required: 1 },
+  { type: "rating", label: "Seberapa baik tim Provaliant memahami kebutuhan bisnis retail Anda?", required: 1 },
+  { type: "rating", label: "Bagaimana kualitas after-sales support yang diberikan tim?", required: 1 },
+  { type: "nps",    label: "Seberapa besar kemungkinan Anda merekomendasikan Provaliant ke sesama pelaku bisnis?", required: 1 },
+  { type: "select", label: "Apakah toko online sudah mulai menghasilkan transaksi?", required: 1, options: "Ya sudah banyak transaksi,Ya sudah ada beberapa transaksi,Belum ada transaksi,Masih dalam testing" },
+  { type: "text",   label: "Fitur toko online yang paling membantu bisnis Anda sejauh ini", required: 0 },
+  { type: "text",   label: "Fitur tambahan apa yang Anda butuhkan ke depannya?", required: 0 },
+], 8);
+
+// Recipient 1: Direktur Utama — satisfied
+const rec1Token = nanoid(32);
+const rec1Id = nanoid();
+insertRecipient.run(rec1Id, s10.id, "Budi Hartawan", "budi.hartawan@retailprima.co.id", rec1Token, hashToken(rec1Token), "COMPLETED", ts(8), ts(5), ts(8));
+const r10a = makeResp(s10.id, s10q, {
+  0: "5", 1: "4", 2: "5", 3: "5", 4: "4", 5: "9",
+  6: "Ya sudah ada beberapa transaksi",
+  7: "Fitur keranjang belanja dan integrasi payment gateway sangat mudah digunakan oleh pelanggan kami.",
+  8: "Integrasi dengan sistem inventory gudang dan fitur loyalty program untuk pelanggan setia."
+}, "Budi Hartawan", "budi.hartawan@retailprima.co.id", 5);
+
+// Recipient 2: Manajer IT — critical, risk
+const rec2Token = nanoid(32);
+const rec2Id = nanoid();
+insertRecipient.run(rec2Id, s10.id, "Sinta Rahayu", "sinta.rahayu@retailprima.co.id", rec2Token, hashToken(rec2Token), "COMPLETED", ts(8), ts(4), ts(8));
+const r10b = makeResp(s10.id, s10q, {
+  0: "4", 1: "2", 2: "2", 3: "3", 4: "2", 5: "5",
+  6: "Masih dalam testing",
+  7: "Tampilan frontend sudah bagus dan modern.",
+  8: "Loading sangat lambat di mobile. Fitur pencarian produk sering error. Tidak ada dashboard admin yang memadai untuk manajemen stok."
+}, "Sinta Rahayu", "sinta.rahayu@retailprima.co.id", 4);
+
+if (r10b.fuStatus === "NEEDS_FOLLOWUP") {
+  insertFollowUp.run(nanoid(), r10b.id, pm2Id, "Sinta mengeluhkan performa mobile dan fitur pencarian. Tim dev sudah diberitahu untuk investigasi.", "IN_PROGRESS", null, ts(3), ts(1));
+}
+
 // ===== DRAFT surveys =====
 const s7 = makeSurvey(p1, csId, "DRAFT", -1, "Follow-up phase 2 - belum dikirim");
 addQs(s7.id, [
@@ -261,6 +306,7 @@ console.log("  s1 PT Maju Bersama: 2 responses (1 excellent, 1 RISK - skor renda
 console.log("  s2 CV Digital Nusantara: 1 response (excellent)");
 console.log("  s3 PT Karya Mandiri: 2 responses (1 RISK, 1 average)");
 console.log("  s4 Bank Nusantara: 1 response (good)");
+console.log("  s10 PT Retail Prima: 2 named recipients, 2 responses (1 good, 1 RISK - multi-token demo)");
 console.log("  s5/s6: SENT, belum ada respons");
 console.log("  s7/s8: DRAFT dengan pertanyaan siap\n");
 console.log("Demo accounts:");
