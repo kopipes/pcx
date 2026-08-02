@@ -1,0 +1,258 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+
+interface Question {
+  id: string;
+  type: "rating" | "nps" | "text" | "select";
+  label: string;
+  required: boolean;
+  options?: string | null;
+  sortOrder: number;
+}
+
+export default function SurveyPage() {
+  const { token } = useParams<{ token: string }>();
+
+  const [status, setStatus] = useState<"loading" | "valid" | "completed" | "expired" | "draft" | "error">("loading");
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [respondentName, setRespondentName] = useState("");
+  const [respondentEmail, setRespondentEmail] = useState("");
+  const [recipientName, setRecipientName] = useState<string | null>(null); // pre-filled from recipient list
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch(`/api/surveys/token/${token}`)
+      .then(async (r) => {
+        if (r.status === 410) {
+          const d = await r.json();
+          if (d.error === "Already completed") setStatus("completed");
+          else if (d.error === "Survey not yet active") setStatus("draft");
+          else setStatus("expired");
+          return;
+        }
+        if (!r.ok) { setStatus("error"); return; }
+        const d = await r.json();
+        setQuestions(d.questions || []);
+        if (d.recipientName) setRecipientName(d.recipientName);
+        setStatus("valid");
+      })
+      .catch(() => setStatus("error"));
+  }, [token]);
+
+  function setAnswer(index: number, value: string) {
+    setAnswers(prev => ({ ...prev, [String(index)]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    // Validate required questions
+    for (let i = 0; i < questions.length; i++) {
+      if (questions[i].required && !answers[String(i)]) {
+        setError(`Pertanyaan ${i + 1} wajib diisi.`);
+        return;
+      }
+    }
+
+    setSubmitting(true);
+    const res = await fetch(`/api/surveys/token/${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers, respondentName, respondentEmail }),
+    });
+
+    if (res.ok) {
+      setSubmitted(true);
+    } else {
+      const d = await res.json();
+      setError(d.error || "Terjadi kesalahan, silakan coba lagi.");
+    }
+    setSubmitting(false);
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-gray-500 text-sm">Memuat survei...</div>
+      </div>
+    );
+  }
+
+  if (status === "completed") return <StatusScreen icon="✓" color="green" title="Survei Sudah Diisi" message="Terima kasih! Anda sudah mengisi survei ini sebelumnya." />;
+  if (status === "expired") return <StatusScreen icon="⏱" color="gray" title="Survei Kadaluarsa" message="Link survei ini sudah tidak aktif. Silakan hubungi tim kami." />;
+  if (status === "draft") return <StatusScreen icon="⚙" color="gray" title="Survei Belum Aktif" message="Survei ini belum dikirimkan oleh tim. Silakan tunggu atau hubungi Customer Service." />;
+  if (status === "error") return <StatusScreen icon="✕" color="red" title="Survei Tidak Ditemukan" message="Link survei tidak valid. Pastikan Anda menggunakan link yang benar." />;
+
+  if (submitted) return <StatusScreen icon="✓" color="green" title="Terima Kasih!" message="Feedback Anda telah berhasil kami terima. Penilaian Anda sangat membantu kami untuk terus meningkatkan layanan." />;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 text-white text-2xl font-bold mb-4">P</div>
+          <h1 className="text-2xl font-bold text-gray-900">Survei Kepuasan Klien</h1>
+          <p className="text-gray-500 text-sm mt-2">Provaliant Client Experience — Penilaian Anda sangat berarti bagi kami</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Respondent Identity — hidden if recipient is known, required if anonymous */}
+          {recipientName ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg">
+                  {recipientName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-900">Halo, {recipientName}!</div>
+                  <div className="text-xs text-gray-400">Survei ini dikirimkan khusus untuk Anda</div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="font-semibold text-gray-900 mb-1">Identitas</h2>
+              <p className="text-xs text-gray-400 mb-4">Wajib diisi agar feedback Anda dapat ditindaklanjuti</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Nama <span className="text-red-500">*</span></label>
+                  <input required value={respondentName} onChange={(e) => setRespondentName(e.target.value)}
+                    placeholder="Nama Anda"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Email <span className="text-red-500">*</span></label>
+                  <input type="email" required value={respondentEmail} onChange={(e) => setRespondentEmail(e.target.value)}
+                    placeholder="email@perusahaan.com"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dynamic Questions */}
+          {questions.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center text-gray-400 text-sm">
+              Survei ini belum memiliki pertanyaan.
+            </div>
+          ) : (
+            questions.map((q, i) => (
+              <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                <div className="mb-4">
+                  <span className="text-xs text-gray-400 font-medium">Pertanyaan {i + 1}</span>
+                  {q.required && <span className="text-red-400 ml-1 text-xs">*</span>}
+                  <h3 className="font-semibold text-gray-900 mt-1">{q.label}</h3>
+                </div>
+
+                {/* Rating 1–5 */}
+                {q.type === "rating" && (
+                  <div>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button key={s} type="button" onClick={() => setAnswer(i, String(s))}
+                          className={`flex-1 py-3 rounded-xl text-sm font-semibold border-2 transition ${
+                            answers[String(i)] === String(s)
+                              ? "bg-indigo-600 border-indigo-600 text-white"
+                              : "border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+                          }`}
+                          aria-label={`Skor ${s}`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
+                      <span>Sangat Buruk</span><span>Sangat Baik</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* NPS 0–10 */}
+                {q.type === "nps" && (
+                  <div>
+                    <div className="flex gap-1.5">
+                      {[0,1,2,3,4,5,6,7,8,9,10].map((n) => {
+                        const selected = answers[String(i)] === String(n);
+                        const color = n <= 6 ? "hover:border-red-300" : n <= 8 ? "hover:border-yellow-300" : "hover:border-green-300";
+                        const selColor = n <= 6 ? "bg-red-500 border-red-500 text-white" : n <= 8 ? "bg-yellow-400 border-yellow-400 text-white" : "bg-green-500 border-green-500 text-white";
+                        return (
+                          <button key={n} type="button" onClick={() => setAnswer(i, String(n))}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border-2 transition ${selected ? selColor : `border-gray-200 text-gray-600 ${color}`}`}
+                            aria-label={`NPS ${n}`}
+                          >
+                            {n}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
+                      <span>Tidak mungkin</span><span>Sangat mungkin</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Text */}
+                {q.type === "text" && (
+                  <textarea value={answers[String(i)] || ""} onChange={(e) => setAnswer(i, e.target.value)}
+                    rows={3} placeholder="Tuliskan jawaban Anda..."
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none resize-none" />
+                )}
+
+                {/* Select */}
+                {q.type === "select" && q.options && (
+                  <div className="space-y-2">
+                    {q.options.split(",").map((opt) => opt.trim()).filter(Boolean).map((opt) => (
+                      <label key={opt} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition ${
+                        answers[String(i)] === opt ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-indigo-200"
+                      }`}>
+                        <input type="radio" name={`q-${i}`} value={opt} checked={answers[String(i)] === opt}
+                          onChange={() => setAnswer(i, opt)} className="text-indigo-600" />
+                        <span className="text-sm text-gray-700">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{error}</div>
+          )}
+
+          <button type="submit" disabled={submitting || questions.length === 0}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-4 rounded-2xl text-base transition shadow-lg">
+            {submitting ? "Mengirim..." : "Kirim Penilaian"}
+          </button>
+
+          <p className="text-center text-xs text-gray-400 pb-4">
+            Data Anda terlindungi dan hanya digunakan untuk meningkatkan kualitas layanan Provaliant.
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function StatusScreen({ icon, color, title, message }: { icon: string; color: string; title: string; message: string }) {
+  const colors: Record<string, string> = {
+    green: "bg-green-100 text-green-600",
+    red: "bg-red-100 text-red-600",
+    gray: "bg-gray-100 text-gray-600",
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
+        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full text-3xl mb-4 ${colors[color]}`}>{icon}</div>
+        <h1 className="text-xl font-bold text-gray-900 mb-2">{title}</h1>
+        <p className="text-gray-500 text-sm">{message}</p>
+      </div>
+    </div>
+  );
+}

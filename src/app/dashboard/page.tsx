@@ -1,10 +1,9 @@
 import { auth } from "@/lib/auth";
-import { getDashboardPath } from "@/lib/session";
+import { getDashboardPath, requireAuth } from "@/lib/session";
 import { UserRole } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
-export default async function Home() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+export default async function DashboardPage() {
+  const session = await requireAuth();
   redirect(getDashboardPath(session.user.role as UserRole));
 }

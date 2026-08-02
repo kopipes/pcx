@@ -1,0 +1,772 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { formatDate, formatDateTime, getSlaStatus } from "@/lib/utils";
+
+interface Question {
+  id?: string;
+  type: "rating" | "nps" | "text" | "select";
+  label: string;
+  required: boolean;
+  options?: string;
+  sortOrder?: number;
+}
+
+interface Recipient {
+  id: string;
+  name: string | null;
+  email: string | null;
+  token: string;
+  status: "PENDING" | "COMPLETED" | "EXPIRED";
+  submittedAt: string | null;
+  createdAt: string;
+}
+
+interface SurveyDetail {
+  id: string;
+  token: string | null;
+  status: string;
+  notes: string | null;
+  expiresAt: string;
+  sentAt: string | null;
+  createdAt: string;
+  projectId: string;
+  projectName: string | null;
+  clientCompany: string | null;
+  businessUnitName: string | null;
+  projectManagerName: string | null;
+  responses: ResponseItem[];
+}
+
+interface ResponseItem {
+  id: string;
+  scoreOverall: number | null;
+  nps: number | null;
+  improvementArea: string | null;
+  comments: string | null;
+  followUpStatus: string;
+  respondentName: string | null;
+  respondentEmail: string | null;
+  submittedAt: string;
+  answers?: string | null;
+}
+
+interface Template {
+  id: string;
+  name: string;
+  description: string | null;
+  questions: Question[];
+}
+
+const statusColor: Record<string, string> = {
+  DRAFT: "bg-gray-100 text-gray-600",
+  SENT: "bg-yellow-100 text-yellow-800",
+  COMPLETED: "bg-green-100 text-green-800",
+  EXPIRED: "bg-red-100 text-red-600",
+};
+const statusLabel: Record<string, string> = {
+  DRAFT: "Draft", SENT: "Terkirim", COMPLETED: "Selesai", EXPIRED: "Kadaluarsa",
+};
+const followUpColor: Record<string, string> = {
+  NONE: "bg-gray-100 text-gray-600",
+  NEEDS_FOLLOWUP: "bg-red-100 text-red-700",
+  IN_PROGRESS: "bg-yellow-100 text-yellow-800",
+  RESOLVED: "bg-green-100 text-green-700",
+};
+const typeLabel: Record<string, string> = {
+  rating: "Rating 1–5", nps: "NPS 0–10", text: "Teks Bebas", select: "Pilihan Ganda",
+};
+
+function QuestionRow({
+  q, index, total,
+  onChange, onRemove, onMove,
+}: {
+  q: Question; index: number; total: number;
+  onChange: (i: number, q: Question) => void;
+  onRemove: (i: number) => void;
+  onMove: (i: number, dir: -1 | 1) => void;
+}) {
+  return (
+    <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-400 font-medium w-5">{index + 1}.</span>
+        <select
+          value={q.type}
+          onChange={(e) => onChange(index, { ...q, type: e.target.value as Question["type"] })}
+          className="px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-400 outline-none bg-white"
+        >
+          {Object.entries(typeLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <div className="flex gap-1 ml-auto">
+          <button onClick={() => onMove(index, -1)} disabled={index === 0} className="px-1.5 py-1 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↑</button>
+          <button onClick={() => onMove(index, 1)} disabled={index === total - 1} className="px-1.5 py-1 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↓</button>
+          <button onClick={() => onRemove(index)} className="px-1.5 py-1 text-xs text-red-400 hover:text-red-600">✕</button>
+        </div>
+      </div>
+      <input
+        value={q.label}
+        onChange={(e) => onChange(index, { ...q, label: e.target.value })}
+        placeholder="Teks pertanyaan..."
+        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+      />
+      {q.type === "select" && (
+        <input
+          value={q.options || ""}
+          onChange={(e) => onChange(index, { ...q, options: e.target.value })}
+          placeholder="Pilihan dipisah koma: Opsi A,Opsi B,Opsi C"
+          className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-400 outline-none"
+        />
+      )}
+      <label className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+        <input type="checkbox" checked={q.required} onChange={(e) => onChange(index, { ...q, required: e.target.checked })} />
+        Wajib diisi
+      </label>
+    </div>
+  );
+}
+
+function StatusFlow({ current }: { current: string }) {
+  const steps = ["DRAFT", "SENT", "COMPLETED"];
+  if (current === "EXPIRED") return <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-600 rounded-full">Kadaluarsa</span>;
+  return (
+    <div className="flex items-center gap-1">
+      {steps.map((step, i) => {
+        const idx = steps.indexOf(current);
+        const isDone = idx > i, isCurrent = current === step;
+        return (
+          <div key={step} className="flex items-center gap-1">
+            <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isDone ? "bg-green-50 text-green-700 border-green-200" : isCurrent ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
+              {isDone ? "✓" : isCurrent ? "●" : "○"}
+              <span className="ml-1">{step === "DRAFT" ? "Draft" : step === "SENT" ? "Terkirim" : "Selesai"}</span>
+            </div>
+            {i < steps.length - 1 && <span className="text-gray-300 text-xs mx-0.5">→</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function SurveyDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [survey, setSurvey] = useState<SurveyDetail | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [copiedRecipient, setCopiedRecipient] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editNotes, setEditNotes] = useState("");
+  const [editDays, setEditDays] = useState(7);
+  const [templateName, setTemplateName] = useState("");
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [questionsDirty, setQuestionsDirty] = useState(false);
+  const [templateLoaded, setTemplateLoaded] = useState("");
+  const [sendError, setSendError] = useState("");
+  // Extend/close for SENT surveys
+  const [showExtend, setShowExtend] = useState(false);
+  const [extendDays, setExtendDays] = useState(7);
+  const [extending, setExtending] = useState(false);
+  const [closing, setClosing] = useState(false);
+  // Recipients
+  const [showAddRecipient, setShowAddRecipient] = useState(false);
+  const [recipientRows, setRecipientRows] = useState<{ name: string; email: string }[]>([{ name: "", email: "" }]);
+  const [addingRecipients, setAddingRecipients] = useState(false);
+  const [deletingRecipient, setDeletingRecipient] = useState<string | null>(null);
+
+  const loadSurvey = useCallback(async () => {
+    const [sRes, qRes, tRes, rRes] = await Promise.all([
+      fetch(`/api/surveys/${id}/detail`).then(r => r.json()),
+      fetch(`/api/surveys/${id}/questions`).then(r => r.json()),
+      fetch(`/api/templates`).then(r => r.json()),
+      fetch(`/api/surveys/${id}/recipients`).then(r => r.json()),
+    ]);
+    setSurvey(sRes);
+    setEditNotes(sRes.notes || "");
+    setQuestions(Array.isArray(qRes) ? qRes : []);
+    setTemplates(Array.isArray(tRes) ? tRes : []);
+    setRecipients(Array.isArray(rRes) ? rRes : []);
+    setLoading(false);
+  }, [id]);
+
+  useEffect(() => { loadSurvey(); }, [loadSurvey]);
+
+  function addQuestion() {
+    setQuestions(q => [...q, { type: "rating", label: "", required: true }]);
+    setQuestionsDirty(true);
+  }
+
+  function updateQuestion(i: number, q: Question) {
+    setQuestions(prev => prev.map((old, idx) => idx === i ? q : old));
+    setQuestionsDirty(true);
+  }
+
+  function removeQuestion(i: number) {
+    setQuestions(prev => prev.filter((_, idx) => idx !== i));
+    setQuestionsDirty(true);
+  }
+
+  function moveQuestion(i: number, dir: -1 | 1) {
+    setQuestions(prev => {
+      const arr = [...prev];
+      [arr[i], arr[i + dir]] = [arr[i + dir], arr[i]];
+      return arr;
+    });
+    setQuestionsDirty(true);
+  }
+
+  function loadTemplate(t: Template) {
+    setQuestions(t.questions.map(q => ({ type: q.type, label: q.label, required: q.required, options: q.options })));
+    setQuestionsDirty(true);
+    setShowTemplates(false);
+    setTemplateLoaded(`Template "${t.name}" dimuat — ${t.questions.length} pertanyaan`);
+    setTimeout(() => setTemplateLoaded(""), 3000);
+  }
+
+  async function saveQuestions() {
+    if (!questions.length) { setSendError("Tambahkan minimal 1 pertanyaan."); return; }
+    const invalid = questions.find(q => !q.label.trim());
+    if (invalid) { setSendError("Semua pertanyaan harus memiliki teks."); return; }
+    setSaving(true);
+    setSendError("");
+    await fetch(`/api/surveys/${id}/questions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ questions }),
+    });
+    setQuestionsDirty(false);
+    setSaving(false);
+  }
+
+  async function handleSend() {
+    if (!questions.length) { setSendError("Tambahkan minimal 1 pertanyaan sebelum mengirim."); return; }
+    const invalid = questions.find(q => !q.label.trim());
+    if (invalid) { setSendError("Semua pertanyaan harus memiliki teks."); return; }
+    if (questionsDirty) await saveQuestions();
+    if (!confirm("Kirim survei ini? Setelah dikirim, link akan aktif dan tidak bisa diedit lagi.")) return;
+    setSending(true);
+    setSendError("");
+    await fetch(`/api/surveys/${id}/detail`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "send" }),
+    });
+    await loadSurvey();
+    setSending(false);
+  }
+
+  async function handleSaveEdit() {
+    setSaving(true);
+    await fetch(`/api/surveys/${id}/detail`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: editNotes, expiresInDays: editDays }),
+    });
+    await loadSurvey();
+    setEditing(false);
+    setSaving(false);
+  }
+
+  async function handleSaveTemplate() {
+    if (!templateName.trim()) return;
+    setSavingTemplate(true);
+    await fetch("/api/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: templateName, questions }),
+    });
+    setTemplateName("");
+    setShowSaveTemplate(false);
+    await loadSurvey();
+    setSavingTemplate(false);
+  }
+
+  async function handleClose() {
+    if (!confirm("Tutup survei sekarang? Link akan langsung tidak aktif dan tidak bisa diisi lagi.")) return;
+    setClosing(true);
+    await fetch(`/api/surveys/${id}/detail`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "close" }),
+    });
+    await loadSurvey();
+    setClosing(false);
+  }
+
+  async function handleExtend(e: React.FormEvent) {
+    e.preventDefault();
+    setExtending(true);
+    await fetch(`/api/surveys/${id}/detail`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "extend", expiresInDays: extendDays }),
+    });
+    await loadSurvey();
+    setShowExtend(false);
+    setExtending(false);
+  }
+
+  function copyLink() {
+    if (!survey?.token) return;
+    navigator.clipboard.writeText(`${window.location.origin}/survey/${survey.token}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function copyRecipientLink(token: string, recipientId: string) {
+    navigator.clipboard.writeText(`${window.location.origin}/survey/${token}`);
+    setCopiedRecipient(recipientId);
+    setTimeout(() => setCopiedRecipient(null), 2000);
+  }
+
+  async function handleAddRecipients(e: React.FormEvent) {
+    e.preventDefault();
+    const valid = recipientRows.filter(r => r.name.trim() || r.email.trim());
+    if (!valid.length) return;
+    setAddingRecipients(true);
+    await fetch(`/api/surveys/${id}/recipients`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(valid),
+    });
+    await loadSurvey();
+    setShowAddRecipient(false);
+    setRecipientRows([{ name: "", email: "" }]);
+    setAddingRecipients(false);
+  }
+
+  async function handleDeleteRecipient(rid: string) {
+    if (!confirm("Hapus penerima ini?")) return;
+    setDeletingRecipient(rid);
+    await fetch(`/api/surveys/${id}/recipients/${rid}`, { method: "DELETE" });
+    setRecipients(prev => prev.filter(r => r.id !== rid));
+    setDeletingRecipient(null);
+  }
+
+  if (loading) return <div className="text-center py-12 text-gray-400">Memuat data...</div>;
+  if (!survey || (survey as { error?: string }).error) return (
+    <div className="text-center py-12 text-gray-400">
+      Survei tidak ditemukan. <Link href="/dashboard/cs" className="text-indigo-600 hover:underline">Kembali</Link>
+    </div>
+  );
+
+  const surveyUrl = survey.token ? `${window.location.origin}/survey/${survey.token}` : null;
+  const isDraft = survey.status === "DRAFT";
+  const isSent = survey.status === "SENT";
+
+  return (
+    <div className="max-w-3xl">
+      <div className="mb-4">
+        <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-gray-700">← Kembali</button>
+      </div>
+
+      {/* Survey Info */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{survey.clientCompany}</h1>
+            <p className="text-gray-500 text-sm mt-0.5">{survey.projectName} · {survey.businessUnitName}</p>
+            <p className="text-gray-400 text-xs mt-1">PM: {survey.projectManagerName || "—"} · Dibuat: {formatDate(new Date(survey.createdAt))}</p>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor[survey.status]}`}>{statusLabel[survey.status]}</span>
+        </div>
+        <StatusFlow current={survey.status} />
+        {survey.notes && <div className="mt-3 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600"><span className="text-xs text-gray-400 font-medium">Catatan: </span>{survey.notes}</div>}
+
+        {/* Edit info */}
+        {isDraft && editing && (
+          <div className="mt-4 border border-indigo-100 rounded-lg p-4 bg-indigo-50 space-y-3">
+            <div className="text-sm font-medium text-indigo-700">Edit Info Survei</div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Catatan Internal</label>
+              <textarea value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={2}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none resize-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Perpanjang kadaluarsa (hari dari sekarang)</label>
+              <input type="number" min={1} max={30} value={editDays} onChange={(e) => setEditDays(Number(e.target.value))}
+                className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={handleSaveEdit} disabled={saving} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition">
+                {saving ? "Menyimpan..." : "Simpan"}
+              </button>
+              <button onClick={() => setEditing(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">Batal</button>
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 flex-wrap mt-4">
+          {isDraft && !editing && (
+            <button onClick={() => setEditing(true)} className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+              ✏ Edit Info
+            </button>
+          )}
+          {isDraft && (
+            <button onClick={handleSend} disabled={sending}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition">
+              {sending ? "Mengaktifkan..." : "▶ Kirim / Aktifkan Link"}
+            </button>
+          )}
+          {(isSent || survey.status === "COMPLETED") && surveyUrl && (
+            <button onClick={copyLink}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${copied ? "bg-green-500 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}>
+              {copied ? "✓ Link Tersalin!" : "⧉ Salin Magic Link"}
+            </button>
+          )}
+          {isSent && (
+            <>
+              <button onClick={() => setShowExtend(!showExtend)}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                Perpanjang
+              </button>
+              <button onClick={handleClose} disabled={closing}
+                className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-60 transition">
+                {closing ? "Menutup..." : "Tutup Survei"}
+              </button>
+            </>
+          )}
+        </div>
+
+        {sendError && <div className="mt-3 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{sendError}</div>}
+
+        {/* Extend form for SENT surveys */}
+        {isSent && showExtend && (
+          <form onSubmit={handleExtend} className="mt-3 flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+            <span className="text-sm text-gray-600">Perpanjang</span>
+            <input
+              type="number" min={1} max={90} value={extendDays}
+              onChange={(e) => setExtendDays(Number(e.target.value))}
+              className="w-20 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+            />
+            <span className="text-sm text-gray-600">hari dari sekarang</span>
+            <button type="submit" disabled={extending}
+              className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition">
+              {extending ? "Menyimpan..." : "Simpan"}
+            </button>
+            <button type="button" onClick={() => setShowExtend(false)}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+              Batal
+            </button>
+          </form>
+        )}
+
+        {(isSent || survey.status === "COMPLETED") && surveyUrl && (
+          <div className="mt-4 bg-gray-50 rounded-lg p-3">
+            <div className="text-xs text-gray-500 mb-1">Magic Link Klien</div>
+            <code className="text-xs text-gray-700 break-all">{surveyUrl}</code>
+            <div className="text-xs text-gray-400 mt-1">{isSent ? `Aktif hingga: ${formatDate(new Date(survey.expiresAt))}` : "Survei sudah diisi klien"}</div>
+          </div>
+        )}
+        {isDraft && (
+          <div className="mt-4 bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700">
+            Draft belum aktif. Susun pertanyaan di bawah, lalu klik <strong>"Kirim / Aktifkan Link"</strong>.
+          </div>
+        )}
+      </div>
+
+      {/* Question Builder — only for DRAFT */}
+      {isDraft && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Pertanyaan Survei</h2>
+              <p className="text-xs text-gray-400 mt-0.5">{questions.length} pertanyaan</p>
+            </div>
+            <div className="flex gap-2">
+              {templates.length > 0 && (
+                <button onClick={() => setShowTemplates(!showTemplates)}
+                  className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 transition">
+                  Pakai Template
+                </button>
+              )}
+              {questions.length > 0 && (
+                <button onClick={() => setShowSaveTemplate(!showSaveTemplate)}
+                  className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 transition">
+                  Simpan sebagai Template
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Template loaded toast */}
+          {templateLoaded && (
+            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-2.5 text-sm flex items-center gap-2">
+              <span>✓</span> {templateLoaded} — edit sesuai kebutuhan, lalu simpan.
+            </div>
+          )}
+          {showTemplates && (
+            <div className="mb-4 border border-indigo-100 rounded-lg p-3 bg-indigo-50">
+              <div className="text-xs font-medium text-indigo-700 mb-2">Pilih Template</div>
+              <div className="space-y-2">
+                {templates.map((t) => (
+                  <div key={t.id} className="flex items-center justify-between bg-white rounded-lg border border-indigo-100 px-3 py-2">
+                    <div>
+                      <div className="text-sm font-medium text-gray-800">{t.name}</div>
+                      {t.description && <div className="text-xs text-gray-400">{t.description}</div>}
+                      <div className="text-xs text-gray-400">{t.questions.length} pertanyaan</div>
+                    </div>
+                    <button onClick={() => loadTemplate(t)}
+                      className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 transition">
+                      Gunakan
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Save as template */}
+          {showSaveTemplate && (
+            <div className="mb-4 border border-green-100 rounded-lg p-3 bg-green-50 flex gap-2 items-center">
+              <input value={templateName} onChange={(e) => setTemplateName(e.target.value)}
+                placeholder="Nama template..."
+                className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-400 outline-none" />
+              <button onClick={handleSaveTemplate} disabled={savingTemplate || !templateName.trim()}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:opacity-60 transition">
+                {savingTemplate ? "Menyimpan..." : "Simpan"}
+              </button>
+              <button onClick={() => setShowSaveTemplate(false)} className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-gray-50">Batal</button>
+            </div>
+          )}
+
+          {/* Questions list */}
+          <div className="space-y-2 mb-4">
+            {questions.length === 0 && (
+              <div className="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-lg">
+                Belum ada pertanyaan. Tambahkan pertanyaan atau pilih dari template.
+              </div>
+            )}
+            {questions.map((q, i) => (
+              <QuestionRow key={i} q={q} index={i} total={questions.length}
+                onChange={updateQuestion} onRemove={removeQuestion} onMove={moveQuestion} />
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            <button onClick={addQuestion}
+              className="px-4 py-2 border-2 border-dashed border-indigo-300 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-50 transition">
+              + Tambah Pertanyaan
+            </button>
+            {questionsDirty && questions.length > 0 && (
+              <button onClick={saveQuestions} disabled={saving}
+                className="px-4 py-2 bg-gray-800 text-white rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-60 transition">
+                {saving ? "Menyimpan..." : "💾 Simpan Pertanyaan"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* View questions for non-draft */}
+      {!isDraft && questions.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+          <h2 className="text-base font-semibold text-gray-900 mb-3">Pertanyaan ({questions.length})</h2>
+          <div className="space-y-2">
+            {questions.map((q, i) => (
+              <div key={i} className="flex items-start gap-3 py-2 border-b border-gray-50 last:border-0">
+                <span className="text-xs text-gray-400 font-medium mt-0.5 w-5">{i + 1}.</span>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-800">{q.label}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{typeLabel[q.type]}{q.required ? " · Wajib" : " · Opsional"}</div>
+                  {q.type === "select" && q.options && (
+                    <div className="text-xs text-gray-400">Pilihan: {q.options}</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recipients Section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">Penerima Survei</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {recipients.length === 0
+                ? "Tanpa daftar penerima — gunakan 1 link untuk semua"
+                : `${recipients.length} penerima · ${recipients.filter(r => r.status === "COMPLETED").length} sudah mengisi`}
+            </p>
+          </div>
+          {(isSent || isDraft) && (
+            <button
+              onClick={() => setShowAddRecipient(!showAddRecipient)}
+              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition"
+            >
+              + Tambah Penerima
+            </button>
+          )}
+        </div>
+
+        {/* Add recipients form */}
+        {showAddRecipient && (
+          <form onSubmit={handleAddRecipients} className="mb-4 border border-indigo-100 rounded-lg p-4 bg-indigo-50 space-y-3">
+            <div className="text-xs font-semibold text-indigo-700 mb-1">Tambah Penerima — setiap penerima mendapat link unik</div>
+            {recipientRows.map((row, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input
+                  value={row.name}
+                  onChange={(e) => setRecipientRows(prev => prev.map((r, idx) => idx === i ? { ...r, name: e.target.value } : r))}
+                  placeholder="Nama"
+                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                />
+                <input
+                  type="email"
+                  value={row.email}
+                  onChange={(e) => setRecipientRows(prev => prev.map((r, idx) => idx === i ? { ...r, email: e.target.value } : r))}
+                  placeholder="Email (opsional)"
+                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                />
+                {recipientRows.length > 1 && (
+                  <button type="button" onClick={() => setRecipientRows(prev => prev.filter((_, idx) => idx !== i))}
+                    className="text-red-400 hover:text-red-600 px-2">✕</button>
+                )}
+              </div>
+            ))}
+            <div className="flex gap-2 items-center">
+              <button type="button"
+                onClick={() => setRecipientRows(prev => [...prev, { name: "", email: "" }])}
+                className="text-xs text-indigo-600 hover:underline font-medium">
+                + Tambah baris
+              </button>
+              <span className="text-gray-300">·</span>
+              <button type="submit" disabled={addingRecipients}
+                className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 disabled:opacity-60 transition">
+                {addingRecipients ? "Menyimpan..." : "Simpan Penerima"}
+              </button>
+              <button type="button" onClick={() => { setShowAddRecipient(false); setRecipientRows([{ name: "", email: "" }]); }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-gray-50">
+                Batal
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Recipients list */}
+        {recipients.length === 0 ? (
+          <div className="text-xs text-gray-400 py-2">
+            {isSent
+              ? "Tidak ada penerima terdaftar. Gunakan magic link survei di atas untuk distribusi umum, atau tambahkan penerima spesifik di sini."
+              : "Tambahkan penerima setelah survei diaktifkan, atau aktifkan dulu lalu tambahkan penerima."}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {recipients.map((r) => {
+              const recipientUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/survey/${r.token}`;
+              return (
+                <div key={r.id} className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${r.status === "COMPLETED" ? "bg-green-50 border-green-100" : "bg-white border-gray-200"}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900 text-sm">{r.name || "—"}</span>
+                      {r.email && <span className="text-xs text-gray-400">{r.email}</span>}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5 font-mono truncate">{recipientUrl}</div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      r.status === "COMPLETED" ? "bg-green-100 text-green-700" :
+                      r.status === "EXPIRED" ? "bg-gray-100 text-gray-500" :
+                      "bg-yellow-100 text-yellow-800"
+                    }`}>
+                      {r.status === "COMPLETED" ? "Sudah Isi" : r.status === "EXPIRED" ? "Expired" : "Belum Isi"}
+                    </span>
+                    {r.status !== "COMPLETED" && (
+                      <button
+                        onClick={() => copyRecipientLink(r.token, r.id)}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition ${copiedRecipient === r.id ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}
+                      >
+                        {copiedRecipient === r.id ? "✓ Tersalin" : "Salin Link"}
+                      </button>
+                    )}
+                    {r.status !== "COMPLETED" && (
+                      <button
+                        onClick={() => handleDeleteRecipient(r.id)}
+                        disabled={deletingRecipient === r.id}
+                        className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50"
+                      >
+                        {deletingRecipient === r.id ? "..." : "Hapus"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Summary */}
+            <div className="pt-2 text-xs text-gray-500 flex gap-4">
+              <span>Total: <strong>{recipients.length}</strong></span>
+              <span>Sudah isi: <strong className="text-green-600">{recipients.filter(r => r.status === "COMPLETED").length}</strong></span>
+              <span>Belum isi: <strong className="text-yellow-600">{recipients.filter(r => r.status === "PENDING").length}</strong></span>
+              <span>Response rate: <strong>{recipients.length > 0 ? Math.round(recipients.filter(r => r.status === "COMPLETED").length / recipients.length * 100) : 0}%</strong></span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Responses */}
+      <h2 className="text-base font-semibold text-gray-900 mb-3">Respons ({survey.responses.length})</h2>
+      {survey.responses.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400 text-sm">
+          {isDraft ? "Aktifkan survei terlebih dahulu." : isSent ? "Belum ada respons. Bagikan magic link ke klien." : "Tidak ada respons."}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {survey.responses.map((r) => {
+            const answers: Record<string, string> = r.answers ? JSON.parse(r.answers) : {};
+            return (
+              <div key={r.id} className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="font-medium text-gray-900">{r.respondentName || "Anonim"}</div>
+                    <div className="text-xs text-gray-400">{r.respondentEmail || "—"} · {formatDateTime(new Date(r.submittedAt))}</div>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
+                    {r.followUpStatus.replace("_", " ")}
+                  </span>
+                </div>
+                {/* Dynamic answers */}
+                {Object.keys(answers).length > 0 ? (
+                  <div className="space-y-2">
+                    {questions.map((q, i) => {
+                      const val = answers[String(i)];
+                      if (!val) return null;
+                      return (
+                        <div key={i} className="flex gap-3 text-sm">
+                          <span className="text-gray-400 text-xs mt-0.5 w-4">{i + 1}.</span>
+                          <div>
+                            <div className="text-xs text-gray-500">{q.label}</div>
+                            <div className={`font-medium ${q.type === "rating" && Number(val) <= 2 ? "text-red-600" : q.type === "rating" && Number(val) >= 4 ? "text-green-600" : "text-gray-800"}`}>
+                              {q.type === "rating" ? `${val}/5` : q.type === "nps" ? `NPS: ${val}` : val}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  // Fallback for old responses
+                  <div className="text-sm text-gray-500 space-y-1">
+                    {r.scoreOverall !== null && <div>Skor Overall: <strong>{r.scoreOverall}/5</strong></div>}
+                    {r.nps !== null && <div>NPS: <strong>{r.nps}</strong></div>}
+                    {r.comments && <div className="bg-gray-50 rounded-lg px-3 py-2 italic text-gray-600">"{r.comments}"</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
