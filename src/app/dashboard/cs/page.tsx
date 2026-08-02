@@ -148,7 +148,7 @@ export default function CSDashboard() {
                       : <StatusFlow current={s.status} />
                     }
                   </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(new Date(s.expiresAt))}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(s.expiresAt)}</td>
                   <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{s.notes || "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">

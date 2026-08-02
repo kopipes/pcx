@@ -84,7 +84,7 @@ export default function PMFollowUpsPage() {
                       <span className="text-sm text-gray-500">{f.projectName}</span>
                     </div>
                     <div className="text-sm text-gray-500 mb-2">
-                      Responden: {f.respondentName || "—"} · Diterima: {formatDateTime(new Date(f.submittedAt))}
+                      Responden: {f.respondentName || "—"} · Diterima: {formatDateTime(f.submittedAt)}
                     </div>
                     <div className="flex gap-4 text-sm mb-3">
                       <span>Skor: <strong className={f.scoreOverall && f.scoreOverall <= 2 ? "text-red-600" : ""}>{f.scoreOverall?.toFixed(1) ?? "—"}/5</strong></span>

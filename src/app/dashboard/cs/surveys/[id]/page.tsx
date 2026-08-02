@@ -374,7 +374,7 @@ export default function SurveyDetailPage() {
           <div>
             <h1 className="text-xl font-bold text-gray-900">{survey.clientCompany}</h1>
             <p className="text-gray-500 text-sm mt-0.5">{survey.projectName} · {survey.businessUnitName}</p>
-            <p className="text-gray-400 text-xs mt-1">PM: {survey.projectManagerName || "—"} · Dibuat: {formatDate(new Date(survey.createdAt))}</p>
+            <p className="text-gray-400 text-xs mt-1">PM: {survey.projectManagerName || "—"} · Dibuat: {formatDate(survey.createdAt)}</p>
           </div>
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor[survey.status]}`}>{statusLabel[survey.status]}</span>
         </div>
@@ -464,7 +464,7 @@ export default function SurveyDetailPage() {
           <div className="mt-4 bg-gray-50 rounded-lg p-3">
             <div className="text-xs text-gray-500 mb-1">Magic Link Klien</div>
             <code className="text-xs text-gray-700 break-all">{surveyUrl}</code>
-            <div className="text-xs text-gray-400 mt-1">{isSent ? `Aktif hingga: ${formatDate(new Date(survey.expiresAt))}` : "Survei sudah diisi klien"}</div>
+            <div className="text-xs text-gray-400 mt-1">{isSent ? `Aktif hingga: ${formatDate(survey.expiresAt)}` : "Survei sudah diisi klien"}</div>
           </div>
         )}
         {isDraft && (
@@ -729,7 +729,7 @@ export default function SurveyDetailPage() {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="font-medium text-gray-900">{r.respondentName || "Anonim"}</div>
-                    <div className="text-xs text-gray-400">{r.respondentEmail || "—"} · {formatDateTime(new Date(r.submittedAt))}</div>
+                    <div className="text-xs text-gray-400">{r.respondentEmail || "—"} · {formatDateTime(r.submittedAt)}</div>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
                     {r.followUpStatus.replace("_", " ")}

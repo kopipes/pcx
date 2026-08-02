@@ -229,7 +229,7 @@ export default function CreateSurveyPage() {
                   </div>
                   {s.notes && <div className="text-xs text-gray-400 mt-0.5 truncate">{s.notes}</div>}
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-400">{formatDate(new Date(s.createdAt))}</span>
+                    <span className="text-xs text-gray-400">{formatDate(s.createdAt)}</span>
                     {s.questionCount > 0 ? (
                       <span className="text-xs text-indigo-600 font-medium">{s.questionCount} pertanyaan</span>
                     ) : (

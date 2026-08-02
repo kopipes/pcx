@@ -160,7 +160,7 @@ export default function CSResponsesPage() {
                       <span className="text-xs text-gray-500">{r.projectName}</span>
                     </div>
                     <div className="text-xs text-gray-400 mb-2">
-                      {r.respondentName || "Anonim"} · {formatDateTime(new Date(r.submittedAt))}
+                      {r.respondentName || "Anonim"} · {formatDateTime(r.submittedAt)}
                     </div>
 
                     {/* Score overview */}

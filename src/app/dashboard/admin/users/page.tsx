@@ -164,7 +164,7 @@ export default function AdminUsersPage() {
                     <td className="px-4 py-3">
                       <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-medium">{u.role}</span></td>
                     <td className="px-4 py-3 text-gray-500">{u.businessUnitName || "—"}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(new Date(u.createdAt))}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(u.createdAt)}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
                         <button onClick={() => editingId === u.id ? setEditingId(null) : startEdit(u)}
