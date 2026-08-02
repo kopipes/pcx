@@ -44,23 +44,23 @@ export function toDate(val: Date | string | number | null | undefined): Date | n
 export function formatDate(date: Date | string | number | null | undefined): string {
   const d = toDate(date);
   if (!d) return "—";
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(d);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
+  const mmm = months[d.getMonth()];
+  const yyyy = d.getFullYear();
+  return `${dd} ${mmm} ${yyyy}`;
 }
 
 export function formatDateTime(date: Date | string | number | null | undefined): string {
   const d = toDate(date);
   if (!d) return "—";
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(d);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Ags","Sep","Okt","Nov","Des"];
+  const mmm = months[d.getMonth()];
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${dd} ${mmm} ${yyyy}, ${hh}:${mm}`;
 }
 
 export function getSlaStatus(
