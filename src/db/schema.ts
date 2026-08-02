@@ -6,8 +6,8 @@ export const surveyTemplates = sqliteTable("survey_templates", {
   name: text("name").notNull(),
   description: text("description"),
   createdBy: text("created_by").notNull().references(() => users.id),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const surveyQuestions = sqliteTable("survey_questions", {
@@ -19,7 +19,7 @@ export const surveyQuestions = sqliteTable("survey_questions", {
   label: text("label").notNull(),
   required: integer("required", { mode: "boolean" }).notNull().default(true),
   options: text("options"), // JSON array for select type
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const surveyRecipients = sqliteTable("survey_recipients", {
@@ -30,9 +30,9 @@ export const surveyRecipients = sqliteTable("survey_recipients", {
   token: text("token").notNull().unique(),
   tokenHash: text("token_hash").notNull().unique(),
   status: text("status", { enum: ["PENDING", "COMPLETED", "EXPIRED"] }).notNull().default("PENDING"),
-  sentAt: integer("sent_at", { mode: "timestamp" }),
-  submittedAt: integer("submitted_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  sentAt: integer("sent_at", { mode: "timestamp_ms" }),
+  submittedAt: integer("submitted_at", { mode: "timestamp_ms" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const users = sqliteTable("users", {
@@ -42,15 +42,15 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   role: text("role", { enum: ["CS", "PM", "BU_HEAD", "DIRECTOR", "ADMIN"] }).notNull(),
   businessUnitId: text("business_unit_id").references(() => businessUnits.id),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const businessUnits = sqliteTable("business_units", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   code: text("code").notNull().unique(),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const projects = sqliteTable("projects", {
@@ -59,8 +59,8 @@ export const projects = sqliteTable("projects", {
   projectName: text("project_name").notNull(),
   businessUnitId: text("business_unit_id").notNull().references(() => businessUnits.id),
   projectManagerId: text("project_manager_id").references(() => users.id),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const surveys = sqliteTable("surveys", {
@@ -68,14 +68,14 @@ export const surveys = sqliteTable("surveys", {
   projectId: text("project_id").notNull().references(() => projects.id),
   token: text("token"),
   tokenHash: text("token_hash").notNull().unique(),
-  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
   status: text("status", { enum: ["DRAFT", "SENT", "COMPLETED", "EXPIRED"] }).notNull().default("DRAFT"),
   notes: text("notes"),
   templateId: text("template_id"),
-  sentAt: integer("sent_at", { mode: "timestamp" }),
-  reminderSentAt: integer("reminder_sent_at", { mode: "timestamp" }),
+  sentAt: integer("sent_at", { mode: "timestamp_ms" }),
+  reminderSentAt: integer("reminder_sent_at", { mode: "timestamp_ms" }),
   createdBy: text("created_by").notNull().references(() => users.id),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const responses = sqliteTable("responses", {
@@ -98,7 +98,7 @@ export const responses = sqliteTable("responses", {
   answers: text("answers"), // JSON: { "0": "4", "1": "yes", ... }
   respondentName: text("respondent_name"),
   respondentEmail: text("respondent_email"),
-  submittedAt: integer("submitted_at", { mode: "timestamp" }).notNull(),
+  submittedAt: integer("submitted_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 export const followUps = sqliteTable("followups", {
@@ -107,9 +107,9 @@ export const followUps = sqliteTable("followups", {
   ownerId: text("owner_id").references(() => users.id), // PM
   actionNotes: text("action_notes"),
   status: text("status", { enum: ["OPEN", "IN_PROGRESS", "RESOLVED"] }).notNull().default("OPEN"),
-  resolvedAt: integer("resolved_at", { mode: "timestamp" }),
-  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+  resolvedAt: integer("resolved_at", { mode: "timestamp_ms" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
 // Relations
