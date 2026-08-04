@@ -30,6 +30,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
-  await db.delete(projects).where(eq(projects.id, id));
-  return NextResponse.json({ success: true });
+  try {
+    await db.delete(projects).where(eq(projects.id, id));
+    return NextResponse.json({ success: true });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("FOREIGN KEY")) {
+      return NextResponse.json({ error: "Proyek tidak dapat dihapus karena masih memiliki survei yang terhubung." }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Gagal menghapus proyek." }, { status: 500 });
+  }
 }

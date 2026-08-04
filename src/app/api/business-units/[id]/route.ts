@@ -28,6 +28,18 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
-  await db.delete(businessUnits).where(eq(businessUnits.id, id));
-  return NextResponse.json({ success: true });
+
+  try {
+    await db.delete(businessUnits).where(eq(businessUnits.id, id));
+    return NextResponse.json({ success: true });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("FOREIGN KEY")) {
+      return NextResponse.json(
+        { error: "Business Unit tidak dapat dihapus karena masih memiliki proyek atau user yang terhubung. Hapus atau pindahkan data tersebut terlebih dahulu." },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json({ error: "Gagal menghapus Business Unit." }, { status: 500 });
+  }
 }

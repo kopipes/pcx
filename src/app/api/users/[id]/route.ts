@@ -38,6 +38,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   // Prevent self-deletion
   if (id === session.user.id) return NextResponse.json({ error: "Tidak bisa menghapus akun sendiri" }, { status: 400 });
 
-  await db.delete(users).where(eq(users.id, id));
-  return NextResponse.json({ success: true });
+  try {
+    await db.delete(users).where(eq(users.id, id));
+    return NextResponse.json({ success: true });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("FOREIGN KEY")) {
+      return NextResponse.json({ error: "User tidak dapat dihapus karena masih memiliki data yang terhubung." }, { status: 400 });
+    }
+    return NextResponse.json({ error: "Gagal menghapus user." }, { status: 500 });
+  }
 }
