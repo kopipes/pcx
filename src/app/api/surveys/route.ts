@@ -9,7 +9,10 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const allSurveys = await db
+  const role = session.user.role;
+  const buId = session.user.businessUnitId;
+
+  const baseQuery = db
     .select({
       id: surveys.id,
       status: surveys.status,
@@ -20,11 +23,16 @@ export async function GET() {
       projectId: surveys.projectId,
       projectName: projects.projectName,
       clientCompany: projects.clientCompany,
+      businessUnitId: projects.businessUnitId,
       questionCount: sql<number>`(SELECT COUNT(*) FROM survey_questions WHERE survey_id = ${surveys.id})`,
     })
     .from(surveys)
-    .leftJoin(projects, eq(surveys.projectId, projects.id))
-    .all();
+    .leftJoin(projects, eq(surveys.projectId, projects.id));
+
+  // BU_HEAD only sees surveys in their BU
+  const allSurveys = role === "BU_HEAD" && buId
+    ? await baseQuery.where(eq(projects.businessUnitId, buId)).all()
+    : await baseQuery.all();
 
   return NextResponse.json(allSurveys);
 }
