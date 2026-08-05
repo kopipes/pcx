@@ -7,7 +7,7 @@ import { formatDate, formatDateTime, getSlaStatus } from "@/lib/utils";
 
 interface Question {
   id?: string;
-  type: "rating" | "nps" | "text" | "select";
+  type: "rating" | "nps" | "text" | "select" | "multiselect";
   label: string;
   required: boolean;
   options?: string;
@@ -77,7 +77,7 @@ const followUpColor: Record<string, string> = {
   RESOLVED: "bg-green-100 text-green-700",
 };
 const typeLabel: Record<string, string> = {
-  rating: "Rating 1–5", nps: "NPS 0–10", text: "Teks Bebas", select: "Pilihan Ganda",
+  rating: "Rating 1–5", nps: "NPS 0–10", text: "Teks Bebas", select: "Pilihan Ganda", multiselect: "Pilihan Berganda",
 };
 
 function QuestionRow({
@@ -112,11 +112,11 @@ function QuestionRow({
         placeholder="Teks pertanyaan..."
         className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
       />
-      {q.type === "select" && (
+      {(q.type === "select" || q.type === "multiselect") && (
         <input
           value={q.options || ""}
           onChange={(e) => onChange(index, { ...q, options: e.target.value })}
-          placeholder="Pilihan dipisah koma: Opsi A,Opsi B,Opsi C"
+          placeholder={q.type === "multiselect" ? "Pilihan dipisah koma: Opsi A,Opsi B,Opsi C (bisa pilih banyak)" : "Pilihan dipisah koma: Opsi A,Opsi B,Opsi C"}
           className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-400 outline-none"
         />
       )}

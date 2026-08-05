@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     .get();
 
   const savedQuestions = await Promise.all(
-    questions.map((q: { type: "rating" | "nps" | "text" | "select"; label: string; required: boolean; options?: string }, i: number) =>
+    questions.map((q: { type: "rating" | "nps" | "text" | "select" | "multiselect"; label: string; required: boolean; options?: string }, i: number) =>
       db.insert(surveyQuestions).values({
         id: generateId(),
         templateId: template.id,

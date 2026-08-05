@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 interface Question {
   id: string;
-  type: "rating" | "nps" | "text" | "select";
+  type: "rating" | "nps" | "text" | "select" | "multiselect";
   label: string;
   required: boolean;
   options?: string | null;
@@ -150,13 +150,13 @@ export default function SurveyPage() {
                   <h3 className="font-semibold text-gray-900 mt-1">{q.label}</h3>
                 </div>
 
-                {/* Rating 1–5 */}
+                {/* Rating 1–5 — smaller circles */}
                 {q.type === "rating" && (
                   <div>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((s) => (
                         <button key={s} type="button" onClick={() => setAnswer(i, String(s))}
-                          className={`flex-1 aspect-square rounded-full text-sm font-semibold border-2 transition ${
+                          className={`w-10 h-10 rounded-full text-sm font-semibold border-2 transition flex items-center justify-center ${
                             answers[String(i)] === String(s)
                               ? "bg-indigo-600 border-indigo-600 text-white"
                               : "border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
@@ -204,7 +204,7 @@ export default function SurveyPage() {
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none resize-none" />
                 )}
 
-                {/* Select */}
+                {/* Select — single choice */}
                 {q.type === "select" && q.options && (
                   <div className="space-y-2">
                     {q.options.split(",").map((opt) => opt.trim()).filter(Boolean).map((opt) => (
@@ -216,6 +216,31 @@ export default function SurveyPage() {
                         <span className="text-sm text-gray-700">{opt}</span>
                       </label>
                     ))}
+                  </div>
+                )}
+
+                {/* Multiselect — multiple choices */}
+                {q.type === "multiselect" && q.options && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-gray-400 mb-1">Pilih satu atau lebih jawaban</p>
+                    {q.options.split(",").map((opt) => opt.trim()).filter(Boolean).map((opt) => {
+                      const selected = (answers[String(i)] || "").split("||").map(s => s.trim()).filter(Boolean).includes(opt);
+                      return (
+                        <label key={opt} className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition ${
+                          selected ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-indigo-200"
+                        }`}>
+                          <input type="checkbox" value={opt} checked={selected}
+                            onChange={(e) => {
+                              const current = (answers[String(i)] || "").split("||").map(s => s.trim()).filter(Boolean);
+                              const updated = e.target.checked
+                                ? [...current, opt]
+                                : current.filter(v => v !== opt);
+                              setAnswer(i, updated.join(" || "));
+                            }} className="text-indigo-600 rounded" />
+                          <span className="text-sm text-gray-700">{opt}</span>
+                        </label>
+                      );
+                    })}
                   </div>
                 )}
               </div>
