@@ -156,7 +156,7 @@ export default function SurveyPage() {
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((s) => (
                         <button key={s} type="button" onClick={() => setAnswer(i, String(s))}
-                          className={`flex-1 py-3 rounded-xl text-sm font-semibold border-2 transition ${
+                          className={`flex-1 aspect-square rounded-full text-sm font-semibold border-2 transition ${
                             answers[String(i)] === String(s)
                               ? "bg-indigo-600 border-indigo-600 text-white"
                               : "border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
@@ -225,6 +225,32 @@ export default function SurveyPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{error}</div>
           )}
+
+          {/* Cara Mengisi */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div className="text-sm font-semibold text-gray-700 mb-3">Panduan Pengisian</div>
+            <div className="space-y-2 text-xs text-gray-500">
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">1</span>
+                <span><strong className="text-gray-700">Rating (1–5)</strong> — Pilih angka yang mewakili penilaian Anda. 1 = Sangat Buruk, 5 = Sangat Baik.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">2</span>
+                <span><strong className="text-gray-700">NPS (0–10)</strong> — Seberapa besar kemungkinan Anda merekomendasikan kami. 0–6 = Tidak merekomendasikan, 7–8 = Netral, 9–10 = Sangat merekomendasikan.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">3</span>
+                <span><strong className="text-gray-700">Teks Bebas</strong> — Tuliskan masukan, saran, atau komentar Anda secara langsung.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">4</span>
+                <span><strong className="text-gray-700">Pilihan Ganda</strong> — Pilih salah satu opsi yang paling sesuai dengan kondisi Anda.</span>
+              </div>
+              <div className="pt-1 border-t border-gray-100 text-gray-400">
+                Pertanyaan bertanda <span className="text-red-400 font-bold">*</span> wajib diisi sebelum mengirim.
+              </div>
+            </div>
+          </div>
 
           <button type="submit" disabled={submitting || questions.length === 0}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-4 rounded-2xl text-base transition shadow-lg">
