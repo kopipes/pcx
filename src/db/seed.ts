@@ -19,38 +19,58 @@ sqlite.exec(
   "DELETE FROM projects; DELETE FROM users; DELETE FROM business_units;"
 );
 
-// Business Units
-const buTech = nanoid(), buCreative = nanoid(), buConsulting = nanoid();
+// Business Units (14 units)
+const buCreative = nanoid(), buEventDeniHeidi = nanoid(), buEventDesenDevy = nanoid();
+const buEventProduction = nanoid(), buEventSports = nanoid(), buFutureVast = nanoid();
+const buHRGA = nanoid(), buNTOP = nanoid(), buPremium = nanoid(), buRetail = nanoid();
+const buSaccaExpo = nanoid(), buSaccaMall = nanoid(), buSocialMedia = nanoid();
+const buStarlight = nanoid(), buStudios = nanoid();
+
 const insertBU = sqlite.prepare("INSERT INTO business_units (id, name, code, created_at) VALUES (?, ?, ?, ?)");
-insertBU.run(buTech, "Technology", "TECH", ts(90));
-insertBU.run(buCreative, "Creative", "CRE", ts(90));
-insertBU.run(buConsulting, "Consulting", "CON", ts(90));
+insertBU.run(buCreative,       "Creative",          "CRE",   ts(90));
+insertBU.run(buEventDeniHeidi, "Event DeniHeidi",   "EDH",   ts(90));
+insertBU.run(buEventDesenDevy, "Event DesenDevy",   "EDD",   ts(90));
+insertBU.run(buEventProduction,"Event Production",  "EPR",   ts(90));
+insertBU.run(buEventSports,    "Event Sports",      "ESP",   ts(90));
+insertBU.run(buFutureVast,     "FutureVast",        "FVT",   ts(90));
+insertBU.run(buHRGA,           "HR-GA",             "HRG",   ts(90));
+insertBU.run(buNTOP,           "NTOP",              "NTP",   ts(90));
+insertBU.run(buPremium,        "Premium",           "PRM",   ts(90));
+insertBU.run(buRetail,         "Retail",            "RTL",   ts(90));
+insertBU.run(buSaccaExpo,      "Sacca Expo",        "SEX",   ts(90));
+insertBU.run(buSaccaMall,      "Sacca Mall",        "SML",   ts(90));
+insertBU.run(buSocialMedia,    "Social Media",      "SMD",   ts(90));
+insertBU.run(buStarlight,      "Starlight",         "STL",   ts(90));
+insertBU.run(buStudios,        "Studios",           "STD",   ts(90));
 
 // Users
-const adminId = nanoid(), csId = nanoid(), cs2Id = nanoid();
+const adminId = nanoid(), csId = nanoid(), cs2Id = nanoid(), cs3Id = nanoid();
 const pm1Id = nanoid(), pm2Id = nanoid(), pm3Id = nanoid();
-const buHeadId = nanoid(), buHead2Id = nanoid(), directorId = nanoid();
+const buHeadId = nanoid(), buHead2Id = nanoid(), buHead3Id = nanoid(), directorId = nanoid();
 
 const insertUser = sqlite.prepare("INSERT INTO users (id, name, email, password_hash, role, business_unit_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-insertUser.run(adminId,    "System Admin",    "admin@provaliant.com",    hash("admin123"), "ADMIN",    null,         ts(90), ts(0));
-insertUser.run(csId,       "Sari Dewi",       "cs@provaliant.com",       hash("cs123"),    "CS",       null,         ts(90), ts(0));
-insertUser.run(cs2Id,      "Andi Kurniawan",  "cs2@provaliant.com",      hash("cs123"),    "CS",       null,         ts(90), ts(0));
-insertUser.run(pm1Id,      "Budi Santoso",    "pm1@provaliant.com",      hash("pm123"),    "PM",       buTech,       ts(90), ts(0));
-insertUser.run(pm2Id,      "Citra Lestari",   "pm2@provaliant.com",      hash("pm123"),    "PM",       buCreative,   ts(90), ts(0));
-insertUser.run(pm3Id,      "Reza Firmansyah", "pm3@provaliant.com",      hash("pm123"),    "PM",       buConsulting, ts(90), ts(0));
-insertUser.run(buHeadId,   "Dian Purnama",    "buhead@provaliant.com",   hash("bu123"),    "BU_HEAD",  buTech,       ts(90), ts(0));
-insertUser.run(buHead2Id,  "Fitri Handayani", "buhead2@provaliant.com",  hash("bu123"),    "BU_HEAD",  buCreative,   ts(90), ts(0));
-insertUser.run(directorId, "Eko Prasetyo",    "director@provaliant.com", hash("dir123"),   "DIRECTOR", null,         ts(90), ts(0));
+insertUser.run(adminId,    "System Admin",    "admin@provaliant.com",    hash("admin123"), "ADMIN",    null,            ts(90), ts(0));
+insertUser.run(csId,       "Sari Dewi",       "cs@provaliant.com",       hash("cs123"),    "CS",       buCreative,      ts(90), ts(0));
+insertUser.run(cs2Id,      "Andi Kurniawan",  "cs2@provaliant.com",      hash("cs123"),    "CS",       buEventSports,   ts(90), ts(0));
+insertUser.run(cs3Id,      "Maya Putri",      "cs3@provaliant.com",      hash("cs123"),    "CS",       buRetail,        ts(90), ts(0));
+insertUser.run(pm1Id,      "Budi Santoso",    "pm1@provaliant.com",      hash("pm123"),    "PM",       buCreative,      ts(90), ts(0));
+insertUser.run(pm2Id,      "Citra Lestari",   "pm2@provaliant.com",      hash("pm123"),    "PM",       buEventSports,   ts(90), ts(0));
+insertUser.run(pm3Id,      "Reza Firmansyah", "pm3@provaliant.com",      hash("pm123"),    "PM",       buRetail,        ts(90), ts(0));
+insertUser.run(buHeadId,   "Dian Purnama",    "buhead@provaliant.com",   hash("bu123"),    "BU_HEAD",  buCreative,      ts(90), ts(0));
+insertUser.run(buHead2Id,  "Fitri Handayani", "buhead2@provaliant.com",  hash("bu123"),    "BU_HEAD",  buEventSports,   ts(90), ts(0));
+insertUser.run(buHead3Id,  "Hendra Wijaya",   "buhead3@provaliant.com",  hash("bu123"),    "BU_HEAD",  buRetail,        ts(90), ts(0));
+insertUser.run(directorId, "Eko Prasetyo",    "director@provaliant.com", hash("dir123"),   "DIRECTOR", null,            ts(90), ts(0));
 
 // Projects
 const insertProject = sqlite.prepare("INSERT INTO projects (id, client_company, project_name, business_unit_id, project_manager_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
-const p1 = nanoid(), p2 = nanoid(), p3 = nanoid(), p4 = nanoid(), p5 = nanoid(), p6 = nanoid();
-insertProject.run(p1, "PT Maju Bersama",        "Website Redesign 2026",      buTech,       pm1Id, ts(60), ts(0));
-insertProject.run(p2, "CV Digital Nusantara",   "Brand Identity Refresh",     buCreative,   pm2Id, ts(50), ts(0));
-insertProject.run(p3, "PT Karya Mandiri",       "ERP Implementation",         buConsulting, pm3Id, ts(45), ts(0));
-insertProject.run(p4, "Bank Nusantara",         "Mobile Banking App",         buTech,       pm1Id, ts(40), ts(0));
-insertProject.run(p5, "PT Garuda Fashion",      "Social Media Campaign",      buCreative,   pm2Id, ts(30), ts(0));
-insertProject.run(p6, "Kementerian Pendidikan", "Sistem Informasi Sekolah",   buConsulting, pm3Id, ts(20), ts(0));
+const p1 = nanoid(), p2 = nanoid(), p3 = nanoid(), p4 = nanoid(), p5 = nanoid(), p6 = nanoid(), p7 = nanoid();
+insertProject.run(p1, "PT Maju Bersama",        "Website Redesign 2026",      buCreative,      pm1Id, ts(60), ts(0));
+insertProject.run(p2, "CV Digital Nusantara",   "Brand Identity Refresh",     buCreative,      pm1Id, ts(50), ts(0));
+insertProject.run(p3, "PT Karya Mandiri",       "ERP Implementation",         buRetail,        pm3Id, ts(45), ts(0));
+insertProject.run(p4, "Bank Nusantara",         "Mobile Banking App",         buFutureVast,    pm1Id, ts(40), ts(0));
+insertProject.run(p5, "PT Garuda Fashion",      "Social Media Campaign",      buEventSports,   pm2Id, ts(30), ts(0));
+insertProject.run(p6, "Kementerian Pendidikan", "Sistem Informasi Sekolah",   buEventSports,   pm2Id, ts(20), ts(0));
+insertProject.run(p7, "PT Retail Prima",        "Digitalisasi Toko Online",   buRetail,        pm3Id, ts(35), ts(0));
 
 // Prepared statements
 const insertSurvey   = sqlite.prepare("INSERT INTO surveys (id, project_id, token, token_hash, expires_at, status, notes, sent_at, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -237,11 +257,8 @@ addQs(s6.id, [
 
 const insertRecipient = sqlite.prepare("INSERT INTO survey_recipients (id, survey_id, name, email, token, token_hash, status, sent_at, submitted_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-const p7 = nanoid();
-insertProject.run(p7, "PT Retail Prima", "Digitalisasi Toko Online", buCreative, pm2Id, ts(35), ts(0));
-
 // ===== PROJECT 7: PT Retail Prima — survey with 2 named recipients, both submitted =====
-const s10 = makeSurvey(p7, csId, "COMPLETED", 8, "Survei post-launch toko online - multi penerima");
+const s10 = makeSurvey(p7, cs3Id, "COMPLETED", 8, "Survei post-launch toko online - multi penerima");
 const s10q = addQs(s10.id, [
   { type: "rating", label: "Seberapa puas Anda dengan tampilan dan desain toko online yang dihasilkan?", required: 1 },
   { type: "rating", label: "Apakah fitur-fitur toko online sudah sesuai dengan kebutuhan operasional Anda?", required: 1 },

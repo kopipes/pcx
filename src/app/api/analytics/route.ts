@@ -30,8 +30,8 @@ export async function GET() {
     .leftJoin(projects, eq(surveys.projectId, projects.id))
     .leftJoin(businessUnits, eq(projects.businessUnitId, businessUnits.id));
 
-  // BU_HEAD only sees their own BU
-  const allResponses = role === "BU_HEAD" && buId
+  // BU_HEAD and CS scoped to their BU
+  const allResponses = (role === "BU_HEAD" || role === "CS") && buId
     ? (await query.where(eq(projects.businessUnitId, buId)).all())
     : (await query.all());
 
@@ -69,7 +69,7 @@ export async function GET() {
     .leftJoin(surveys, eq(responses.surveyId, surveys.id))
     .leftJoin(projects, eq(surveys.projectId, projects.id));
 
-  const scopedFollowUps = role === "BU_HEAD" && buId
+  const scopedFollowUps = (role === "BU_HEAD" || role === "CS") && buId
     ? await allFollowUpsQuery.where(eq(projects.businessUnitId, buId)).all()
     : await allFollowUpsQuery.all();
 
