@@ -40,6 +40,7 @@ export default function CreateSurveyPage() {
   const [projectId, setProjectId] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [notes, setNotes] = useState("");
+  const [allowMultiple, setAllowMultiple] = useState(false);
   const [loading, setLoading] = useState(false);
   const [surveysLoading, setSurveysLoading] = useState(true);
   const [pendingQuestions, setPendingQuestions] = useState<{ type: string; label: string; required: boolean; options?: string }[]>([]);
@@ -65,7 +66,7 @@ export default function CreateSurveyPage() {
     const res = await fetch("/api/surveys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId, expiresInDays, notes, asDraft: true }),
+      body: JSON.stringify({ projectId, expiresInDays, notes, allowMultiple, asDraft: true }),
     });
     let data: { error?: string; id?: string; token?: string } = {};
     try { data = await res.json(); } catch { /* empty body */ }
@@ -150,6 +151,25 @@ export default function CreateSurveyPage() {
                 placeholder="Mis: survei untuk project phase 2..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
               />
+            </div>
+
+            {/* Mode distribusi */}
+            <div className="border border-gray-200 rounded-lg p-3 space-y-2">
+              <div className="text-sm font-medium text-gray-700">Mode Distribusi</div>
+              <label className={`flex items-start gap-3 p-2.5 rounded-lg border-2 cursor-pointer transition ${!allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
+                <input type="radio" name="mode" checked={!allowMultiple} onChange={() => setAllowMultiple(false)} className="mt-0.5 text-indigo-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Link Tunggal</div>
+                  <div className="text-xs text-gray-500">1 link, 1 kali submit. Setelah diisi, link tidak bisa dipakai lagi.</div>
+                </div>
+              </label>
+              <label className={`flex items-start gap-3 p-2.5 rounded-lg border-2 cursor-pointer transition ${allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
+                <input type="radio" name="mode" checked={allowMultiple} onChange={() => setAllowMultiple(true)} className="mt-0.5 text-indigo-600" />
+                <div>
+                  <div className="text-sm font-medium text-gray-900">Link Terbuka (Multi-Submit)</div>
+                  <div className="text-xs text-gray-500">1 link bisa diisi oleh banyak orang. Survei tetap aktif sampai ditutup manual atau kadaluarsa.</div>
+                </div>
+              </label>
             </div>
 
             {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{error}</div>}
