@@ -29,6 +29,7 @@ interface SurveyDetail {
   token: string | null;
   status: string;
   notes: string | null;
+  allowMultiple: boolean | null;
   expiresAt: string;
   sentAt: string | null;
   createdAt: string;
@@ -462,9 +463,18 @@ export default function SurveyDetailPage() {
 
         {(isSent || survey.status === "COMPLETED") && surveyUrl && (
           <div className="mt-4 bg-gray-50 rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-1">Magic Link Klien</div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-xs text-gray-500">Magic Link Klien</div>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${survey.allowMultiple ? "bg-blue-100 text-blue-700" : "bg-gray-200 text-gray-600"}`}>
+                {survey.allowMultiple ? "Link Umum — bisa diisi banyak orang" : "Link Per Orang — 1 kali submit"}
+              </span>
+            </div>
             <code className="text-xs text-gray-700 break-all">{surveyUrl}</code>
-            <div className="text-xs text-gray-400 mt-1">{isSent ? `Aktif hingga: ${formatDate(survey.expiresAt)}` : "Survei sudah diisi klien"}</div>
+            <div className="text-xs text-gray-400 mt-1">
+              {survey.allowMultiple
+                ? `Aktif hingga: ${formatDate(survey.expiresAt)} · Dapat diisi berkali-kali`
+                : isSent ? `Aktif hingga: ${formatDate(survey.expiresAt)}` : "Survei sudah diisi klien"}
+            </div>
           </div>
         )}
         {isDraft && (

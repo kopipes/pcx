@@ -40,6 +40,7 @@ export default function CreateSurveyPage() {
   const [projectId, setProjectId] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [notes, setNotes] = useState("");
+  const [allowMultiple, setAllowMultiple] = useState(false);
   const [loading, setLoading] = useState(false);
   const [surveysLoading, setSurveysLoading] = useState(true);
   const [pendingQuestions, setPendingQuestions] = useState<{ type: string; label: string; required: boolean; options?: string }[]>([]);
@@ -65,7 +66,7 @@ export default function CreateSurveyPage() {
     const res = await fetch("/api/surveys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId, expiresInDays, notes, asDraft: true }),
+      body: JSON.stringify({ projectId, expiresInDays, notes, allowMultiple, asDraft: true }),
     });
     let data: { error?: string; id?: string; token?: string } = {};
     try { data = await res.json(); } catch { /* empty body */ }
@@ -150,6 +151,27 @@ export default function CreateSurveyPage() {
                 placeholder="Mis: survei untuk project phase 2..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
               />
+            </div>
+
+            {/* Mode distribusi link */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Mode Link</label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className={`flex items-start gap-2 p-3 rounded-lg border-2 cursor-pointer transition text-xs ${!allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
+                  <input type="radio" name="linkMode" checked={!allowMultiple} onChange={() => setAllowMultiple(false)} className="mt-0.5 text-indigo-600" />
+                  <div>
+                    <div className="font-semibold text-gray-900">Link Per Orang</div>
+                    <div className="text-gray-500 mt-0.5">Satu link diisi satu kali. Gunakan fitur Penerima untuk kirim ke banyak orang.</div>
+                  </div>
+                </label>
+                <label className={`flex items-start gap-2 p-3 rounded-lg border-2 cursor-pointer transition text-xs ${allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
+                  <input type="radio" name="linkMode" checked={allowMultiple} onChange={() => setAllowMultiple(true)} className="mt-0.5 text-indigo-600" />
+                  <div>
+                    <div className="font-semibold text-gray-900">Link Umum</div>
+                    <div className="text-gray-500 mt-0.5">Satu link bisa diisi banyak orang. Setiap orang mengisi identitas sendiri.</div>
+                  </div>
+                </label>
+              </div>
             </div>
 
             {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{error}</div>}

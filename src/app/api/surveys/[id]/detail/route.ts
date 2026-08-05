@@ -52,17 +52,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const body = await req.json();
-  const { projectId, expiresInDays, notes, action } = body;
+  const { projectId, expiresInDays, notes, action, allowMultiple } = body;
 
   const survey = await db.select().from(surveys).where(eq(surveys.id, id)).get();
   if (!survey) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const updateData: Record<string, unknown> = {};
 
-  // DRAFT-only edits
   if (survey.status === "DRAFT") {
     if (projectId) updateData.projectId = projectId;
     if (notes !== undefined) updateData.notes = notes;
+    if (allowMultiple !== undefined) updateData.allowMultiple = allowMultiple;
     if (expiresInDays) updateData.expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
     if (action === "send") {
       updateData.status = "SENT";
@@ -70,15 +70,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
-  // SENT-allowed actions
   if (survey.status === "SENT") {
     if (action === "close") {
-      // Manually close — mark as EXPIRED
       updateData.status = "EXPIRED";
-      updateData.expiresAt = new Date(); // set expiry to now
+      updateData.expiresAt = new Date();
     }
     if (action === "extend" && expiresInDays) {
-      // Extend expiry from now
       updateData.expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
     }
     if (notes !== undefined) updateData.notes = notes;

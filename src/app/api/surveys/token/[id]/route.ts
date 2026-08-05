@@ -151,18 +151,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .where(eq(surveyRecipients.id, recipientId));
   }
 
-  // Mark survey as COMPLETED only if no recipients or all recipients done
-  const allRecipients = await db.select().from(surveyRecipients).where(eq(surveyRecipients.surveyId, surveyId)).all();
-  if (allRecipients.length === 0) {
-    // No recipients mode — mark whole survey done
-    await db.update(surveys).set({ status: "COMPLETED" }).where(eq(surveys.id, surveyId));
-  } else {
-    // Multi-recipient: mark COMPLETED only if all done
-    const pendingCount = allRecipients.filter(r => r.status !== "COMPLETED").length - (recipientId ? 1 : 0);
-    if (pendingCount <= 0) {
+  // Mark survey COMPLETED only if not allowMultiple
+  if (!survey.allowMultiple) {
+    const allRecipients = await db.select().from(surveyRecipients).where(eq(surveyRecipients.surveyId, surveyId)).all();
+    if (allRecipients.length === 0) {
+      // No recipients — single submit mode, mark done
       await db.update(surveys).set({ status: "COMPLETED" }).where(eq(surveys.id, surveyId));
+    } else {
+      // Has recipients: mark COMPLETED only when all done
+      const pendingCount = allRecipients.filter(r => r.status !== "COMPLETED").length - (recipientId ? 1 : 0);
+      if (pendingCount <= 0) {
+        await db.update(surveys).set({ status: "COMPLETED" }).where(eq(surveys.id, surveyId));
+      }
     }
   }
+  // allowMultiple=true: survey stays SENT, accepts unlimited responses
 
   return NextResponse.json({ success: true });
 }
