@@ -9,7 +9,10 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const allResponses = await db
+  const role = session.user.role;
+  const buId = session.user.businessUnitId;
+
+  let query = db
     .select({
       scoreOverall: responses.scoreOverall,
       scoreTimeliness: responses.scoreTimeliness,
@@ -25,8 +28,12 @@ export async function GET() {
     .from(responses)
     .leftJoin(surveys, eq(responses.surveyId, surveys.id))
     .leftJoin(projects, eq(surveys.projectId, projects.id))
-    .leftJoin(businessUnits, eq(projects.businessUnitId, businessUnits.id))
-    .all();
+    .leftJoin(businessUnits, eq(projects.businessUnitId, businessUnits.id));
+
+  // BU_HEAD only sees their own BU
+  const allResponses = role === "BU_HEAD" && buId
+    ? (await query.where(eq(projects.businessUnitId, buId)).all())
+    : (await query.all());
 
   const totalResponses = allResponses.length;
   const npsScore = calculateNpsScore(allResponses);
@@ -54,14 +61,24 @@ export async function GET() {
       : 0,
   }));
 
-  // Follow-up SLA
-  const allFollowUps = await db.select().from(followUps).all();
-  const resolvedInSla = allFollowUps.filter((f) => {
+  // Follow-up SLA — scoped to BU if BU_HEAD
+  let allFollowUpsQuery = db
+    .select({ createdAt: followUps.createdAt, resolvedAt: followUps.resolvedAt })
+    .from(followUps)
+    .leftJoin(responses, eq(followUps.responseId, responses.id))
+    .leftJoin(surveys, eq(responses.surveyId, surveys.id))
+    .leftJoin(projects, eq(surveys.projectId, projects.id));
+
+  const scopedFollowUps = role === "BU_HEAD" && buId
+    ? await allFollowUpsQuery.where(eq(projects.businessUnitId, buId)).all()
+    : await allFollowUpsQuery.all();
+
+  const resolvedInSla = scopedFollowUps.filter((f) => {
     if (!f.resolvedAt) return false;
     const slaDeadline = new Date(f.createdAt.getTime() + 2 * 24 * 60 * 60 * 1000);
     return f.resolvedAt <= slaDeadline;
   }).length;
-  const slaPct = allFollowUps.length > 0 ? Math.round((resolvedInSla / allFollowUps.length) * 100) : 100;
+  const slaPct = scopedFollowUps.length > 0 ? Math.round((resolvedInSla / scopedFollowUps.length) * 100) : 100;
 
   return NextResponse.json({
     totalResponses,

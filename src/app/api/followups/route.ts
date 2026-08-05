@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { followUps, responses, surveys, projects, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { followUps, responses, surveys, projects, users, businessUnits } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { generateId } from "@/lib/server-utils";
 
@@ -9,7 +9,11 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const all = await db
+  const role = session.user.role;
+  const userId = session.user.id;
+  const buId = session.user.businessUnitId;
+
+  let query = db
     .select({
       id: followUps.id,
       responseId: followUps.responseId,
@@ -27,13 +31,25 @@ export async function GET() {
       submittedAt: responses.submittedAt,
       projectName: projects.projectName,
       clientCompany: projects.clientCompany,
+      businessUnitId: projects.businessUnitId,
     })
     .from(followUps)
     .leftJoin(responses, eq(followUps.responseId, responses.id))
     .leftJoin(surveys, eq(responses.surveyId, surveys.id))
     .leftJoin(projects, eq(surveys.projectId, projects.id))
-    .leftJoin(users, eq(followUps.ownerId, users.id))
-    .all();
+    .leftJoin(users, eq(followUps.ownerId, users.id));
+
+  let all;
+  if (role === "PM") {
+    // PM only sees follow-ups assigned to them
+    all = await query.where(eq(followUps.ownerId, userId)).all();
+  } else if (role === "BU_HEAD" && buId) {
+    // BU Head only sees follow-ups in their BU
+    all = await query.where(eq(projects.businessUnitId, buId)).all();
+  } else {
+    // CS, ADMIN, DIRECTOR see all
+    all = await query.all();
+  }
 
   return NextResponse.json(all);
 }
