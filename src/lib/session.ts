@@ -14,6 +14,7 @@ export async function requireAuth(allowedRoles?: UserRole[]) {
 
 export function getDashboardPath(role: UserRole): string {
   switch (role) {
+    case "CS": return "/dashboard/cs";
     case "PM": return "/dashboard/pm";
     case "BU_HEAD": return "/dashboard/bu";
     case "DIRECTOR": return "/dashboard/director";

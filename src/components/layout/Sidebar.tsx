@@ -9,6 +9,13 @@ type NavItem = { label: string; href: string };
 type NavSection = { section: string; icon: string; items: NavItem[] };
 
 const navByRole: Record<string, NavSection[]> = {
+  CS: [
+    { section: "Survei", icon: "📋", items: [
+      { label: "Daftar Survei", href: "/dashboard/cs" },
+      { label: "Buat Survei", href: "/dashboard/cs/create" },
+      { label: "Respons", href: "/dashboard/cs/responses" },
+    ]},
+  ],
   PM: [
     { section: "Follow-up", icon: "✅", items: [
       { label: "Proyek Saya", href: "/dashboard/pm" },
@@ -53,6 +60,7 @@ const navByRole: Record<string, NavSection[]> = {
 };
 
 const roleLabel: Record<string, string> = {
+  CS: "Customer Service",
   PM: "Project Manager",
   BU_HEAD: "BU Head",
   DIRECTOR: "Director",

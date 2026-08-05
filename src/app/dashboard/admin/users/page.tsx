@@ -13,7 +13,7 @@ interface User {
   createdAt: string;
 }
 
-const ROLES = ["PM", "BU_HEAD", "DIRECTOR", "ADMIN"];
+const ROLES = ["CS", "PM", "BU_HEAD", "DIRECTOR", "ADMIN"];
 
 type EditForm = { name: string; email: string; role: string; businessUnitId: string; password: string };
 

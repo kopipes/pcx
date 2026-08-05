@@ -50,9 +50,9 @@ const buHeadId = nanoid(), buHead2Id = nanoid(), buHead3Id = nanoid(), directorI
 
 const insertUser = sqlite.prepare("INSERT INTO users (id, name, email, password_hash, role, business_unit_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 insertUser.run(adminId,    "System Admin",    "admin@provaliant.com",    hash("admin123"), "ADMIN",    null,            ts(90), ts(0));
-insertUser.run(csId,       "Sari Dewi",       "cs@provaliant.com",       hash("admin123"), "ADMIN",       buCreative,      ts(90), ts(0));
-insertUser.run(cs2Id,      "Andi Kurniawan",  "cs2@provaliant.com",      hash("admin123"), "ADMIN",       buEventSports,   ts(90), ts(0));
-insertUser.run(cs3Id,      "Maya Putri",      "cs3@provaliant.com",      hash("admin123"), "ADMIN",       buRetail,        ts(90), ts(0));
+insertUser.run(csId,       "Sari Dewi",       "cs@provaliant.com",       hash("cs123"),    "CS",       buCreative,      ts(90), ts(0));
+insertUser.run(cs2Id,      "Andi Kurniawan",  "cs2@provaliant.com",      hash("cs123"),    "CS",       buEventSports,   ts(90), ts(0));
+insertUser.run(cs3Id,      "Maya Putri",      "cs3@provaliant.com",      hash("cs123"),    "CS",       buRetail,        ts(90), ts(0));
 insertUser.run(pm1Id,      "Budi Santoso",    "pm1@provaliant.com",      hash("pm123"),    "PM",       buCreative,      ts(90), ts(0));
 insertUser.run(pm2Id,      "Citra Lestari",   "pm2@provaliant.com",      hash("pm123"),    "PM",       buEventSports,   ts(90), ts(0));
 insertUser.run(pm3Id,      "Reza Firmansyah", "pm3@provaliant.com",      hash("pm123"),    "PM",       buRetail,        ts(90), ts(0));

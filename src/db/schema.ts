@@ -40,7 +40,7 @@ export const users = sqliteTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role", { enum: ["PM", "BU_HEAD", "DIRECTOR", "ADMIN"] }).notNull(),
+  role: text("role", { enum: ["CS", "PM", "BU_HEAD", "DIRECTOR", "ADMIN"] }).notNull(),
   businessUnitId: text("business_unit_id").references(() => businessUnits.id),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
