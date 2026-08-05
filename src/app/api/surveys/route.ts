@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { projectId, expiresInDays = 7, notes, asDraft = true, allowMultiple = false } = body;
+  const { projectId, expiresInDays = 7, notes, asDraft = true } = body;
 
   if (!projectId) return NextResponse.json({ error: "projectId required" }, { status: 400 });
 
@@ -63,7 +63,6 @@ export async function POST(req: NextRequest) {
         tokenHash,
         expiresAt,
         status: asDraft ? "DRAFT" : "SENT",
-        allowMultiple,
         notes: notes || null,
         createdBy: session.user.id,
         createdAt: new Date(),

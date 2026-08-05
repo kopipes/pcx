@@ -70,7 +70,6 @@ export const surveys = sqliteTable("surveys", {
   tokenHash: text("token_hash").notNull().unique(),
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
   status: text("status", { enum: ["DRAFT", "SENT", "COMPLETED", "EXPIRED"] }).notNull().default("DRAFT"),
-  allowMultiple: integer("allow_multiple", { mode: "boolean" }).notNull().default(false),
   notes: text("notes"),
   templateId: text("template_id"),
   sentAt: integer("sent_at", { mode: "timestamp_ms" }),

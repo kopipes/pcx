@@ -29,7 +29,6 @@ interface SurveyDetail {
   token: string | null;
   status: string;
   notes: string | null;
-  allowMultiple: boolean | null;
   expiresAt: string;
   sentAt: string | null;
   createdAt: string;
@@ -463,52 +462,14 @@ export default function SurveyDetailPage() {
 
         {(isSent || survey.status === "COMPLETED") && surveyUrl && (
           <div className="mt-4 bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-xs text-gray-500">Magic Link Klien</div>
-              {survey.allowMultiple && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
-                  Link Terbuka — bisa diisi banyak orang
-                </span>
-              )}
-            </div>
+            <div className="text-xs text-gray-500 mb-1">Magic Link Klien</div>
             <code className="text-xs text-gray-700 break-all">{surveyUrl}</code>
-            <div className="text-xs text-gray-400 mt-1">
-              {survey.status === "COMPLETED" && !survey.allowMultiple
-                ? "Survei sudah diisi klien"
-                : `Aktif hingga: ${formatDate(survey.expiresAt)}`}
-            </div>
+            <div className="text-xs text-gray-400 mt-1">{isSent ? `Aktif hingga: ${formatDate(survey.expiresAt)}` : "Survei sudah diisi klien"}</div>
           </div>
         )}
         {isDraft && (
-          <div className="mt-4 space-y-2">
-            <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700">
-              Draft belum aktif. Susun pertanyaan di bawah, lalu klik <strong>"Kirim / Aktifkan Link"</strong>.
-            </div>
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <div className="text-xs font-medium text-gray-700 mb-2">Mode Distribusi</div>
-              <div className="flex gap-2">
-                <label className={`flex-1 flex items-start gap-2 p-2 rounded-lg border-2 cursor-pointer text-xs transition ${!survey.allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200"}`}>
-                  <input type="radio" checked={!survey.allowMultiple} onChange={async () => {
-                    await fetch(`/api/surveys/${survey.id}/detail`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allowMultiple: false }) });
-                    loadSurvey();
-                  }} className="mt-0.5" />
-                  <div>
-                    <div className="font-medium text-gray-900">Link Tunggal</div>
-                    <div className="text-gray-500">1 link, 1 kali submit</div>
-                  </div>
-                </label>
-                <label className={`flex-1 flex items-start gap-2 p-2 rounded-lg border-2 cursor-pointer text-xs transition ${survey.allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200"}`}>
-                  <input type="radio" checked={!!survey.allowMultiple} onChange={async () => {
-                    await fetch(`/api/surveys/${survey.id}/detail`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allowMultiple: true }) });
-                    loadSurvey();
-                  }} className="mt-0.5" />
-                  <div>
-                    <div className="font-medium text-gray-900">Link Terbuka</div>
-                    <div className="text-gray-500">1 link, bisa diisi banyak orang</div>
-                  </div>
-                </label>
-              </div>
-            </div>
+          <div className="mt-4 bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700">
+            Draft belum aktif. Susun pertanyaan di bawah, lalu klik <strong>"Kirim / Aktifkan Link"</strong>.
           </div>
         )}
       </div>
