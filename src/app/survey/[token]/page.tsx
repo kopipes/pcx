@@ -216,6 +216,25 @@ export default function SurveyPage() {
                         <span className="text-sm text-gray-700">{opt}</span>
                       </label>
                     ))}
+                    {/* Lainnya option */}
+                    <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition ${
+                      answers[String(i)] !== "" && !q.options!.split(",").map(o => o.trim()).includes(answers[String(i)])
+                        ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-indigo-200"
+                    }`}>
+                      <input type="radio" name={`q-${i}`} value="__lainnya__"
+                        checked={answers[String(i)] !== "" && !q.options!.split(",").map(o => o.trim()).includes(answers[String(i)])}
+                        onChange={() => setAnswer(i, "__lainnya__")} className="text-indigo-600" />
+                      <span className="text-sm text-gray-700">Lainnya</span>
+                    </label>
+                    {answers[String(i)] !== "" && !q.options!.split(",").map(o => o.trim()).includes(answers[String(i)]) && (
+                      <input
+                        autoFocus
+                        value={answers[String(i)] === "__lainnya__" ? "" : answers[String(i)]}
+                        onChange={(e) => setAnswer(i, e.target.value || "__lainnya__")}
+                        placeholder="Tuliskan jawaban Anda..."
+                        className="w-full px-3 py-2 border border-indigo-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                      />
+                    )}
                   </div>
                 )}
 
@@ -241,6 +260,43 @@ export default function SurveyPage() {
                         </label>
                       );
                     })}
+                    {/* Lainnya option */}
+                    {(() => {
+                      const parts = (answers[String(i)] || "").split("||").map(s => s.trim()).filter(Boolean);
+                      const knownOpts = q.options!.split(",").map(o => o.trim()).filter(Boolean);
+                      const lainnyaVal = parts.find(p => !knownOpts.includes(p));
+                      const lainnyaChecked = !!lainnyaVal;
+                      return (
+                        <>
+                          <label className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 cursor-pointer transition ${
+                            lainnyaChecked ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-indigo-200"
+                          }`}>
+                            <input type="checkbox" checked={lainnyaChecked}
+                              onChange={(e) => {
+                                const current = parts.filter(p => knownOpts.includes(p));
+                                if (e.target.checked) {
+                                  setAnswer(i, [...current, "__lainnya__"].join(" || "));
+                                } else {
+                                  setAnswer(i, current.join(" || "));
+                                }
+                              }} className="text-indigo-600 rounded" />
+                            <span className="text-sm text-gray-700">Lainnya</span>
+                          </label>
+                          {lainnyaChecked && (
+                            <input
+                              autoFocus
+                              value={lainnyaVal === "__lainnya__" ? "" : (lainnyaVal || "")}
+                              onChange={(e) => {
+                                const current = parts.filter(p => knownOpts.includes(p));
+                                setAnswer(i, [...current, e.target.value || "__lainnya__"].join(" || "));
+                              }}
+                              placeholder="Tuliskan jawaban Anda..."
+                              className="w-full px-3 py-2 border border-indigo-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
