@@ -36,8 +36,8 @@ export async function GET() {
     .leftJoin(surveys, eq(responses.surveyId, surveys.id))
     .leftJoin(projects, eq(surveys.projectId, projects.id));
 
-  // BU_HEAD and CS only see responses in their BU; others see all
-  const allResponses = (role === "BU_HEAD" || role === "CS") && buId
+  // BU_HEAD only sees responses in their BU; others see all
+  const allResponses = role === "BU_HEAD" && buId
     ? await baseQuery.where(eq(projects.businessUnitId, buId)).all()
     : await baseQuery.all();
 

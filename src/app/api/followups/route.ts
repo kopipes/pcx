@@ -43,8 +43,8 @@ export async function GET() {
   if (role === "PM") {
     // PM only sees follow-ups assigned to them
     all = await query.where(eq(followUps.ownerId, userId)).all();
-  } else if ((role === "BU_HEAD" || role === "CS") && buId) {
-    // BU Head and CS only see follow-ups in their BU
+  } else if (role === "BU_HEAD" && buId) {
+    // BU Head only sees follow-ups in their BU
     all = await query.where(eq(projects.businessUnitId, buId)).all();
   } else {
     // CS, ADMIN, DIRECTOR see all

@@ -29,8 +29,8 @@ export async function GET() {
     .from(surveys)
     .leftJoin(projects, eq(surveys.projectId, projects.id));
 
-  // BU_HEAD and CS only see surveys in their BU; others see all
-  const allSurveys = (role === "BU_HEAD" || role === "CS") && buId
+  // ADMIN sees all; BU_HEAD sees own BU only
+  const allSurveys = role === "BU_HEAD" && buId
     ? await baseQuery.where(eq(projects.businessUnitId, buId)).all()
     : await baseQuery.all();
 
@@ -40,7 +40,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["CS", "ADMIN"].includes(session.user.role)) {
+  if (!["ADMIN"].includes(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

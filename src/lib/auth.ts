@@ -5,7 +5,7 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
-export type UserRole = "CS" | "PM" | "BU_HEAD" | "DIRECTOR" | "ADMIN";
+export type UserRole = "PM" | "BU_HEAD" | "DIRECTOR" | "ADMIN";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,

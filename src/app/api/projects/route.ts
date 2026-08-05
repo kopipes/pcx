@@ -27,8 +27,8 @@ export async function GET() {
     .leftJoin(businessUnits, eq(projects.businessUnitId, businessUnits.id))
     .leftJoin(users, eq(projects.projectManagerId, users.id));
 
-  // CS and BU_HEAD only see projects in their BU
-  const allProjects = (role === "CS" || role === "BU_HEAD") && buId
+  // BU_HEAD only sees projects in their BU
+  const allProjects = role === "BU_HEAD" && buId
     ? await baseQuery.where(eq(projects.businessUnitId, buId)).all()
     : await baseQuery.all();
 
@@ -38,7 +38,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["CS", "ADMIN"].includes(session.user.role)) {
+  if (!["ADMIN"].includes(session.user.role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
