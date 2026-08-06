@@ -427,12 +427,21 @@ export default function SurveyDetailPage() {
               ✏ Edit Info
             </button>
           )}
-          {isDraft && (
-            <button onClick={handleSend} disabled={sending}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition">
-              {sending ? "Mengaktifkan..." : "▶ Kirim / Aktifkan Link"}
-            </button>
-          )}
+          {isDraft && (() => {
+            const recipientsWithEmail = recipients.filter(r => r.email && r.status !== "COMPLETED");
+            const hasEmailRecipients = recipientsWithEmail.length > 0;
+            return hasEmailRecipients ? (
+              <button onClick={handleSend} disabled={sending}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition">
+                {sending ? "Mengaktifkan..." : `▶ Aktifkan & Kirim Email ke ${recipientsWithEmail.length} Penerima`}
+              </button>
+            ) : (
+              <button onClick={handleSend} disabled={sending}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition">
+                {sending ? "Mengaktifkan..." : "▶ Kirim / Aktifkan Link"}
+              </button>
+            );
+          })()}
           {(isSent || survey.status === "COMPLETED") && surveyUrl && (
             <button onClick={copyLink}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${copied ? "bg-green-500 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}>
@@ -441,6 +450,17 @@ export default function SurveyDetailPage() {
           )}
           {isSent && (
             <>
+              {(() => {
+                const pendingWithEmail = recipients.filter(r => r.email && r.status !== "COMPLETED");
+                return pendingWithEmail.length > 0 ? (
+                  <button
+                    onClick={() => setEmailPreviewRecipient(pendingWithEmail[0])}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition"
+                  >
+                    ✉ Kirim Email ({pendingWithEmail.length})
+                  </button>
+                ) : null;
+              })()}
               <button onClick={() => setShowExtend(!showExtend)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
                 Perpanjang
@@ -494,7 +514,10 @@ export default function SurveyDetailPage() {
         )}
         {isDraft && (
           <div className="mt-4 bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700">
-            Draft belum aktif. Susun pertanyaan di bawah, lalu klik <strong>"Kirim / Aktifkan Link"</strong>.
+            {recipients.filter(r => r.email && r.status !== "COMPLETED").length > 0
+              ? <>Draft belum aktif. Susun pertanyaan, tambah penerima, lalu klik <strong>"Aktifkan & Kirim Email"</strong> untuk mengaktifkan dan mengirim undangan ke semua penerima.</>
+              : <>Draft belum aktif. Susun pertanyaan di bawah, lalu klik <strong>"Kirim / Aktifkan Link"</strong>.</>
+            }
           </div>
         )}
       </div>
@@ -1022,7 +1045,9 @@ export default function SurveyDetailPage() {
                 </div>
               </div>
               <div className="mt-4 flex gap-2 justify-end">
-                <div className="text-xs text-gray-400 flex-1 pt-1">* Kirim email akan dikonfigurasi terpisah</div>
+                <div className="text-xs text-gray-400 flex-1 pt-1">
+                  {isDraft ? "⚠ Survey masih Draft — akan diaktifkan otomatis saat kirim email" : "* Kirim email akan dikonfigurasi terpisah"}
+                </div>
                 <button
                   onClick={() => setEmailPreviewRecipient(null)}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition"
@@ -1030,10 +1055,25 @@ export default function SurveyDetailPage() {
                   Tutup
                 </button>
                 <button
-                  onClick={() => { alert("Fitur kirim email akan segera tersedia."); }}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition"
+                  onClick={async () => {
+                    if (isDraft) {
+                      if (!confirm("Survey masih Draft. Aktifkan survey sekarang dan kirim email?")) return;
+                      setSending(true);
+                      await fetch(`/api/surveys/${id}/detail`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "send" }),
+                      });
+                      await loadSurvey();
+                      setSending(false);
+                    }
+                    alert("Fitur kirim email akan segera tersedia. Survey sudah diaktifkan.");
+                    setEmailPreviewRecipient(null);
+                  }}
+                  disabled={sending}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition"
                 >
-                  Kirim Email
+                  {isDraft ? "Aktifkan & Kirim Email" : "Kirim Email"}
                 </button>
               </div>
             </div>
