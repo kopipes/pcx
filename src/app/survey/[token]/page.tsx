@@ -20,6 +20,7 @@ export default function SurveyPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [respondentName, setRespondentName] = useState("");
   const [respondentEmail, setRespondentEmail] = useState("");
+  const [respondentCompany, setRespondentCompany] = useState("");
   const [recipientName, setRecipientName] = useState<string | null>(null); // pre-filled from recipient list
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -64,7 +65,7 @@ export default function SurveyPage() {
     const res = await fetch(`/api/surveys/token/${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answers, respondentName, respondentEmail }),
+      body: JSON.stringify({ answers, respondentName, respondentEmail, respondentCompany }),
     });
 
     if (res.ok) {
@@ -130,6 +131,12 @@ export default function SurveyPage() {
                   <label className="block text-sm text-gray-600 mb-1">Email <span className="text-red-500">*</span></label>
                   <input type="email" required value={respondentEmail} onChange={(e) => setRespondentEmail(e.target.value)}
                     placeholder="email@perusahaan.com"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-sm text-gray-600 mb-1">Perusahaan</label>
+                  <input value={respondentCompany} onChange={(e) => setRespondentCompany(e.target.value)}
+                    placeholder="Nama perusahaan Anda"
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none" />
                 </div>
               </div>

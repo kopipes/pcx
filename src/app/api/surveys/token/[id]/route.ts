@@ -87,7 +87,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (survey.expiresAt < new Date()) return NextResponse.json({ error: "Survey expired" }, { status: 410 });
 
   const body = await req.json();
-  const { answers, respondentName, respondentEmail } = body;
+  const { answers, respondentName, respondentEmail, respondentCompany } = body;
+  const enrichedAnswers = respondentCompany ? { ...answers, __company: respondentCompany } : answers;
 
   const questions = (await db
     .select()
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       nps,
       improvementArea: null,
       comments: null,
-      answers: answers ? JSON.stringify(answers) : null,
+      answers: enrichedAnswers ? JSON.stringify(enrichedAnswers) : null,
       followUpStatus,
       respondentName: finalName,
       respondentEmail: finalEmail,
