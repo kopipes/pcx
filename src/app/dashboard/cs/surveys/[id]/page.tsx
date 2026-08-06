@@ -18,6 +18,7 @@ interface Recipient {
   id: string;
   name: string | null;
   email: string | null;
+  company: string | null;
   token: string;
   status: "PENDING" | "COMPLETED" | "EXPIRED";
   submittedAt: string | null;
@@ -179,9 +180,13 @@ export default function SurveyDetailPage() {
   const [closing, setClosing] = useState(false);
   // Recipients
   const [showAddRecipient, setShowAddRecipient] = useState(false);
-  const [recipientRows, setRecipientRows] = useState<{ name: string; email: string }[]>([{ name: "", email: "" }]);
+  const [recipientRows, setRecipientRows] = useState<{ name: string; email: string; company: string }[]>([{ name: "", email: "", company: "" }]);
   const [addingRecipients, setAddingRecipients] = useState(false);
   const [deletingRecipient, setDeletingRecipient] = useState<string | null>(null);
+  // Preview modal
+  const [showPreview, setShowPreview] = useState(false);
+  // Email template modal
+  const [emailPreviewRecipient, setEmailPreviewRecipient] = useState<Recipient | null>(null);
 
   const loadSurvey = useCallback(async () => {
     const [sRes, qRes, tRes, rRes] = await Promise.all([
@@ -340,7 +345,7 @@ export default function SurveyDetailPage() {
     });
     await loadSurvey();
     setShowAddRecipient(false);
-    setRecipientRows([{ name: "", email: "" }]);
+    setRecipientRows([{ name: "", email: "", company: "" }]);
     setAddingRecipients(false);
   }
 
@@ -377,7 +382,17 @@ export default function SurveyDetailPage() {
             <p className="text-gray-500 text-sm mt-0.5">{survey.projectName} · {survey.businessUnitName}</p>
             <p className="text-gray-400 text-xs mt-1">PM: {survey.projectManagerName || "—"} · Dibuat: {formatDate(survey.createdAt)}</p>
           </div>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor[survey.status]}`}>{statusLabel[survey.status]}</span>
+          <div className="flex items-center gap-2">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor[survey.status]}`}>{statusLabel[survey.status]}</span>
+            {questions.length > 0 && (
+              <button
+                onClick={() => setShowPreview(true)}
+                className="px-3 py-1 border border-gray-300 text-gray-600 rounded-full text-sm hover:bg-gray-50 transition"
+              >
+                👁 Preview
+              </button>
+            )}
+          </div>
         </div>
         <StatusFlow current={survey.status} />
         {survey.notes && <div className="mt-3 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600"><span className="text-xs text-gray-400 font-medium">Catatan: </span>{survey.notes}</div>}
@@ -622,31 +637,39 @@ export default function SurveyDetailPage() {
         {/* Add recipients form */}
         {showAddRecipient && (
           <form onSubmit={handleAddRecipients} className="mb-4 border border-indigo-100 rounded-lg p-4 bg-indigo-50 space-y-3">
-            <div className="text-xs font-semibold text-indigo-700 mb-1">Tambah Penerima — setiap penerima mendapat link unik</div>
+            <div className="text-xs font-semibold text-indigo-700 mb-1">Tambah Penerima — setiap penerima mendapat link unik yang tersembunyi</div>
             {recipientRows.map((row, i) => (
-              <div key={i} className="flex gap-2 items-center">
+              <div key={i} className="grid grid-cols-3 gap-2 items-center">
                 <input
                   value={row.name}
                   onChange={(e) => setRecipientRows(prev => prev.map((r, idx) => idx === i ? { ...r, name: e.target.value } : r))}
-                  placeholder="Nama"
-                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                  placeholder="Nama kontak"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
                 />
                 <input
-                  type="email"
-                  value={row.email}
-                  onChange={(e) => setRecipientRows(prev => prev.map((r, idx) => idx === i ? { ...r, email: e.target.value } : r))}
-                  placeholder="Email (opsional)"
-                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                  value={row.company}
+                  onChange={(e) => setRecipientRows(prev => prev.map((r, idx) => idx === i ? { ...r, company: e.target.value } : r))}
+                  placeholder="Nama perusahaan"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
                 />
-                {recipientRows.length > 1 && (
-                  <button type="button" onClick={() => setRecipientRows(prev => prev.filter((_, idx) => idx !== i))}
-                    className="text-red-400 hover:text-red-600 px-2">✕</button>
-                )}
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={row.email}
+                    onChange={(e) => setRecipientRows(prev => prev.map((r, idx) => idx === i ? { ...r, email: e.target.value } : r))}
+                    placeholder="Email"
+                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+                  />
+                  {recipientRows.length > 1 && (
+                    <button type="button" onClick={() => setRecipientRows(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-red-400 hover:text-red-600 px-2">✕</button>
+                  )}
+                </div>
               </div>
             ))}
             <div className="flex gap-2 items-center">
               <button type="button"
-                onClick={() => setRecipientRows(prev => [...prev, { name: "", email: "" }])}
+                onClick={() => setRecipientRows(prev => [...prev, { name: "", email: "", company: "" }])}
                 className="text-xs text-indigo-600 hover:underline font-medium">
                 + Tambah baris
               </button>
@@ -655,7 +678,7 @@ export default function SurveyDetailPage() {
                 className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-medium hover:bg-indigo-700 disabled:opacity-60 transition">
                 {addingRecipients ? "Menyimpan..." : "Simpan Penerima"}
               </button>
-              <button type="button" onClick={() => { setShowAddRecipient(false); setRecipientRows([{ name: "", email: "" }]); }}
+              <button type="button" onClick={() => { setShowAddRecipient(false); setRecipientRows([{ name: "", email: "", company: "" }]); }}
                 className="px-3 py-1.5 border border-gray-300 rounded-lg text-xs hover:bg-gray-50">
                 Batal
               </button>
@@ -675,39 +698,51 @@ export default function SurveyDetailPage() {
             {recipients.map((r) => {
               const recipientUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/survey/${r.token}`;
               return (
-                <div key={r.id} className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${r.status === "COMPLETED" ? "bg-green-50 border-green-100" : "bg-white border-gray-200"}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900 text-sm">{r.name || "—"}</span>
-                      {r.email && <span className="text-xs text-gray-400">{r.email}</span>}
+                <div key={r.id} className={`px-4 py-3 rounded-lg border ${r.status === "COMPLETED" ? "bg-green-50 border-green-100" : "bg-white border-gray-200"}`}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-gray-900 text-sm">{r.name || "—"}</span>
+                        {r.company && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{r.company}</span>}
+                        {r.email && <span className="text-xs text-gray-400">{r.email}</span>}
+                      </div>
+                      {/* Blurred link */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="text-xs text-gray-300 font-mono truncate max-w-xs blur-sm select-none">{recipientUrl}</div>
+                        <button
+                          onClick={() => copyRecipientLink(r.token, r.id)}
+                          className={`text-xs px-2 py-0.5 rounded transition flex-shrink-0 ${copiedRecipient === r.id ? "bg-green-100 text-green-700" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
+                        >
+                          {copiedRecipient === r.id ? "✓ Tersalin" : "Salin"}
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-400 mt-0.5 font-mono truncate">{recipientUrl}</div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                      r.status === "COMPLETED" ? "bg-green-100 text-green-700" :
-                      r.status === "EXPIRED" ? "bg-gray-100 text-gray-500" :
-                      "bg-yellow-100 text-yellow-800"
-                    }`}>
-                      {r.status === "COMPLETED" ? "Sudah Isi" : r.status === "EXPIRED" ? "Expired" : "Belum Isi"}
-                    </span>
-                    {r.status !== "COMPLETED" && (
-                      <button
-                        onClick={() => copyRecipientLink(r.token, r.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-medium transition ${copiedRecipient === r.id ? "bg-green-500 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}
-                      >
-                        {copiedRecipient === r.id ? "✓ Tersalin" : "Salin Link"}
-                      </button>
-                    )}
-                    {r.status !== "COMPLETED" && (
-                      <button
-                        onClick={() => handleDeleteRecipient(r.id)}
-                        disabled={deletingRecipient === r.id}
-                        className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50"
-                      >
-                        {deletingRecipient === r.id ? "..." : "Hapus"}
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        r.status === "COMPLETED" ? "bg-green-100 text-green-700" :
+                        r.status === "EXPIRED" ? "bg-gray-100 text-gray-500" :
+                        "bg-yellow-100 text-yellow-800"
+                      }`}>
+                        {r.status === "COMPLETED" ? "Sudah Isi" : r.status === "EXPIRED" ? "Expired" : "Belum Isi"}
+                      </span>
+                      {r.status !== "COMPLETED" && r.email && (
+                        <button
+                          onClick={() => setEmailPreviewRecipient(r)}
+                          className="text-xs px-2 py-0.5 rounded border border-indigo-200 text-indigo-600 hover:bg-indigo-50 transition"
+                        >
+                          Preview Email
+                        </button>
+                      )}
+                      {r.status !== "COMPLETED" && (
+                        <button
+                          onClick={() => handleDeleteRecipient(r.id)}
+                          disabled={deletingRecipient === r.id}
+                          className="text-xs text-red-400 hover:text-red-600 disabled:opacity-50"
+                        >
+                          {deletingRecipient === r.id ? "..." : "Hapus"}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -871,6 +906,138 @@ export default function SurveyDetailPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Survey Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-start justify-center overflow-y-auto py-8 px-4">
+          <div className="bg-gray-50 rounded-2xl w-full max-w-2xl shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 bg-white rounded-t-2xl border-b border-gray-200">
+              <div>
+                <div className="font-semibold text-gray-900">Preview Survei</div>
+                <div className="text-xs text-gray-400 mt-0.5">Tampilan persis seperti yang dilihat klien</div>
+              </div>
+              <button onClick={() => setShowPreview(false)} className="text-gray-400 hover:text-gray-700 text-xl font-bold px-2">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              {/* Identity section */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                <h2 className="font-semibold text-gray-900 mb-1">Identitas</h2>
+                <p className="text-xs text-gray-400 mb-4">Wajib diisi agar feedback Anda dapat ditindaklanjuti</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Nama <span className="text-red-500">*</span></label>
+                    <input disabled placeholder="Nama Anda" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">Email <span className="text-red-500">*</span></label>
+                    <input disabled placeholder="email@perusahaan.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+              {/* Questions */}
+              {questions.map((q, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6">
+                  <div className="mb-4">
+                    <span className="text-xs text-gray-400">Pertanyaan {i + 1}</span>
+                    {q.required && <span className="text-red-400 ml-1 text-xs">*</span>}
+                    <h3 className="font-semibold text-gray-900 mt-1">{q.label || <span className="text-gray-300 italic">Teks pertanyaan...</span>}</h3>
+                  </div>
+                  {q.type === "rating" && (
+                    <div>
+                      <div className="flex gap-2">
+                        {[1,2,3,4,5].map(s => (
+                          <div key={s} className="w-10 h-10 rounded-full border-2 border-gray-200 flex items-center justify-center text-sm text-gray-400 font-semibold">{s}</div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 mt-2 px-1"><span>Sangat Buruk</span><span>Sangat Baik</span></div>
+                    </div>
+                  )}
+                  {q.type === "nps" && (
+                    <div>
+                      <div className="flex gap-1.5">
+                        {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
+                          <div key={n} className={`flex-1 py-2 rounded-lg border-2 text-xs font-semibold text-center ${n <= 6 ? "border-red-100 text-red-300" : n <= 8 ? "border-yellow-100 text-yellow-400" : "border-green-100 text-green-400"}`}>{n}</div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 mt-2 px-1"><span>Tidak mungkin</span><span>Sangat mungkin</span></div>
+                    </div>
+                  )}
+                  {q.type === "text" && (
+                    <textarea disabled rows={3} placeholder="Tuliskan jawaban Anda..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400 resize-none" />
+                  )}
+                  {(q.type === "select" || q.type === "multiselect") && q.options && (
+                    <div className="space-y-2">
+                      {q.options.split(",").map(opt => opt.trim()).filter(Boolean).map(opt => (
+                        <div key={opt} className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-gray-100 text-sm text-gray-500">{opt}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <button disabled className="w-full bg-indigo-200 text-white font-semibold py-4 rounded-2xl text-base cursor-not-allowed">
+                Kirim Penilaian
+              </button>
+              <p className="text-center text-xs text-gray-400 pb-2">Preview — tidak bisa disubmit</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Email Template Modal */}
+      {emailPreviewRecipient && survey && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div>
+                <div className="font-semibold text-gray-900">Preview Template Email</div>
+                <div className="text-xs text-gray-400 mt-0.5">Kepada: {emailPreviewRecipient.name} · {emailPreviewRecipient.email}</div>
+              </div>
+              <button onClick={() => setEmailPreviewRecipient(null)} className="text-gray-400 hover:text-gray-700 text-xl font-bold px-2">✕</button>
+            </div>
+            <div className="p-6">
+              {/* Email preview */}
+              <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
+                {/* Email header */}
+                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 space-y-1">
+                  <div className="flex gap-2"><span className="text-gray-400 w-12 flex-shrink-0">Dari:</span><span className="text-gray-700">Provaliant Client Experience &lt;noreply@provaliantgroup.com&gt;</span></div>
+                  <div className="flex gap-2"><span className="text-gray-400 w-12 flex-shrink-0">Kepada:</span><span className="text-gray-700">{emailPreviewRecipient.name}{emailPreviewRecipient.email ? ` <${emailPreviewRecipient.email}>` : ""}</span></div>
+                  <div className="flex gap-2"><span className="text-gray-400 w-12 flex-shrink-0">Subjek:</span><span className="text-gray-700 font-medium">Undangan Survei Kepuasan Klien — {survey.clientCompany}</span></div>
+                </div>
+                {/* Email body */}
+                <div className="p-5 space-y-4 text-gray-700 leading-relaxed">
+                  <p>Yth. Bapak/Ibu <strong>{emailPreviewRecipient.name}</strong>{emailPreviewRecipient.company ? ` dari <strong>${emailPreviewRecipient.company}</strong>` : ""},</p>
+                  <p>Terima kasih atas kepercayaan Anda dalam menggunakan layanan <strong>Provaliant</strong> untuk proyek <strong>{survey.projectName}</strong>.</p>
+                  <p>Kami ingin mendapatkan masukan dan penilaian Anda mengenai kualitas layanan yang telah kami berikan. Penilaian Anda sangat berharga bagi kami untuk terus meningkatkan standar layanan.</p>
+                  <p>Silakan klik tombol di bawah ini untuk mengisi survei. Proses pengisian hanya membutuhkan waktu <strong>2–3 menit</strong>.</p>
+                  <div className="text-center py-2">
+                    <div className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold text-sm cursor-not-allowed opacity-80">
+                      Isi Survei Sekarang →
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">Link bersifat personal dan hanya dapat digunakan oleh Anda</p>
+                  </div>
+                  <p>Jika tombol di atas tidak berfungsi, link survei Anda akan dikirimkan secara terpisah oleh tim kami.</p>
+                  <p>Hormat kami,<br /><strong>Tim Provaliant Client Experience</strong></p>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2 justify-end">
+                <div className="text-xs text-gray-400 flex-1 pt-1">* Kirim email akan dikonfigurasi terpisah</div>
+                <button
+                  onClick={() => setEmailPreviewRecipient(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition"
+                >
+                  Tutup
+                </button>
+                <button
+                  onClick={() => { alert("Fitur kirim email akan segera tersedia."); }}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition"
+                >
+                  Kirim Email
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

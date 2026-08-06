@@ -34,6 +34,7 @@ export const surveyRecipients = sqliteTable("survey_recipients", {
   surveyId: text("survey_id").notNull().references(() => surveys.id),
   name: text("name"),
   email: text("email"),
+  company: text("company"),
   token: text("token").notNull().unique(),
   tokenHash: text("token_hash").notNull().unique(),
   status: text("status", { enum: ["PENDING", "COMPLETED", "EXPIRED"] }).notNull().default("PENDING"),

@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const body = await req.json();
   // Accept array of {name, email} or single {name, email}
-  const list: { name?: string; email?: string }[] = Array.isArray(body) ? body : [body];
+  const list: { name?: string; email?: string; company?: string }[] = Array.isArray(body) ? body : [body];
 
   const saved = await Promise.all(
     list.map(async (r) => {
@@ -49,6 +49,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         surveyId: id,
         name: r.name || null,
         email: r.email || null,
+        company: r.company || null,
         token,
         tokenHash: tHash,
         status: "PENDING",
