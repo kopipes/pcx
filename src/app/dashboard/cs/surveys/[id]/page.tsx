@@ -161,7 +161,6 @@ export default function SurveyDetailPage() {
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [copiedRecipient, setCopiedRecipient] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -326,12 +325,6 @@ export default function SurveyDetailPage() {
     navigator.clipboard.writeText(`${window.location.origin}/survey/${survey.token}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  function copyRecipientLink(token: string, recipientId: string) {
-    navigator.clipboard.writeText(`${window.location.origin}/survey/${token}`);
-    setCopiedRecipient(recipientId);
-    setTimeout(() => setCopiedRecipient(null), 2000);
   }
 
   async function handleAddRecipients(e: React.FormEvent) {
@@ -743,16 +736,6 @@ export default function SurveyDetailPage() {
                         <span className="font-medium text-gray-900 text-sm">{r.name || "—"}</span>
                         {r.company && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{r.company}</span>}
                         {r.email && <span className="text-xs text-gray-400">{r.email}</span>}
-                      </div>
-                      {/* Blurred link */}
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="text-xs text-gray-300 font-mono truncate max-w-xs blur-sm select-none">{recipientUrl}</div>
-                        <button
-                          onClick={() => copyRecipientLink(r.token, r.id)}
-                          className={`text-xs px-2 py-0.5 rounded transition flex-shrink-0 ${copiedRecipient === r.id ? "bg-green-100 text-green-700" : "bg-gray-100 hover:bg-gray-200 text-gray-600"}`}
-                        >
-                          {copiedRecipient === r.id ? "✓ Tersalin" : "Salin"}
-                        </button>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
