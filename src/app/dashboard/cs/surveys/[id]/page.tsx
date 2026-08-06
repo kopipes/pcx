@@ -971,6 +971,10 @@ export default function SurveyDetailPage() {
                     <label className="block text-sm text-gray-600 mb-1">Email <span className="text-red-500">*</span></label>
                     <input disabled placeholder="email@perusahaan.com" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400" />
                   </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm text-gray-600 mb-1">Perusahaan</label>
+                    <input disabled placeholder="Nama perusahaan Anda" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400" />
+                  </div>
                 </div>
               </div>
               {/* Questions */}
