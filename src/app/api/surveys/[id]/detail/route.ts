@@ -24,6 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       projectId: surveys.projectId,
       projectName: projects.projectName,
       clientCompany: projects.clientCompany,
+      businessUnitId: projects.businessUnitId,
       businessUnitName: businessUnits.name,
       projectManagerName: users.name,
     })
