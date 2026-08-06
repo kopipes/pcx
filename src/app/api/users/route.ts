@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const roles = session.user.roles || [session.user.role];
   // All authenticated roles can read users list (needed for PM picker in BU/Admin pages)
 
   const allUsers = await db
@@ -31,7 +32,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (session.user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const roles = session.user.roles || [session.user.role];
+  if (!roles.includes("ADMIN")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
   const { name, email, password, role, businessUnitId } = body;

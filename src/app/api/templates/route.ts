@@ -8,6 +8,7 @@ import { generateId } from "@/lib/server-utils";
 export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const roles = session.user.roles || [session.user.role];
 
   const templates = await db.select().from(surveyTemplates).all();
 
@@ -28,7 +29,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["CS", "ADMIN"].includes(session.user.role)) {
+  const roles = session.user.roles || [session.user.role];
+  if (!roles.some(r => ["CS","ADMIN"].includes(r))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

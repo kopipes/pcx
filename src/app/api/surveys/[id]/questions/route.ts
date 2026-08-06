@@ -9,6 +9,7 @@ import { generateId } from "@/lib/server-utils";
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const roles = session.user.roles || [session.user.role];
 
   const { id } = await params;
   const questions = await db
@@ -24,7 +25,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["CS", "ADMIN"].includes(session.user.role)) {
+  const roles = session.user.roles || [session.user.role];
+  if (!roles.some(r => ["CS","ADMIN"].includes(r))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

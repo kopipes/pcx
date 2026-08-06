@@ -11,7 +11,8 @@ export async function DELETE(
 ) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["CS", "ADMIN"].includes(session.user.role)) {
+  const roles = session.user.roles || [session.user.role];
+  if (!roles.some(r => ["CS","ADMIN"].includes(r))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

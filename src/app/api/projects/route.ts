@@ -10,6 +10,7 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const role = session.user.role;
+  const roles = session.user.roles || [role];
   const buId = session.user.businessUnitId;
 
   const baseQuery = db
@@ -38,7 +39,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (!["CS", "ADMIN"].includes(session.user.role)) {
+  const roles = session.user.roles || [session.user.role];
+  if (!roles.some(r => ["CS","ADMIN"].includes(r))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

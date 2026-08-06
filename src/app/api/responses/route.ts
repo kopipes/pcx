@@ -9,6 +9,7 @@ export async function GET() {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const role = session.user.role;
+  const roles = session.user.roles || [role];
   const buId = session.user.businessUnitId;
 
   const baseQuery = db

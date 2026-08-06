@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 export async function requireAuth(allowedRoles?: UserRole[]) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const roles = session.user.roles || [session.user.role];
   // ADMIN bypasses all role restrictions
-  if (allowedRoles && session.user.role !== "ADMIN" && !allowedRoles.includes(session.user.role as UserRole)) {
+  if (allowedRoles && !roles.includes("ADMIN") && !allowedRoles.some(r => roles.includes(r))) {
     redirect("/dashboard");
   }
   return session;

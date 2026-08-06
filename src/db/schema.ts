@@ -22,6 +22,13 @@ export const surveyQuestions = sqliteTable("survey_questions", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+export const userRoles = sqliteTable("user_roles", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  role: text("role", { enum: ["CS", "PM", "BU_HEAD", "DIRECTOR", "ADMIN"] }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 export const surveyRecipients = sqliteTable("survey_recipients", {
   id: text("id").primaryKey(),
   surveyId: text("survey_id").notNull().references(() => surveys.id),

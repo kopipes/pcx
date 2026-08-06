@@ -130,9 +130,22 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
   const role = session?.user?.role || "";
-  const sections = navByRole[role] || [];
+  const roles = session?.user?.roles || [role];
 
-  // For roles with only 1 section, always open it
+  // Merge nav sections from all assigned roles, deduplicate by section name
+  const seenSections = new Set<string>();
+  const sections: NavSection[] = [];
+  for (const r of roles) {
+    const roleSections = navByRole[r] || [];
+    for (const section of roleSections) {
+      if (!seenSections.has(section.section)) {
+        seenSections.add(section.section);
+        sections.push(section);
+      }
+    }
+  }
+
+  // Force single open for single-section users
   const alwaysOpen = sections.length === 1;
 
   return (
