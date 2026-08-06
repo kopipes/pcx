@@ -1068,15 +1068,26 @@ export default function SurveyDetailPage() {
                         body: JSON.stringify({ action: "send" }),
                       });
                       await loadSurvey();
-                      setSending(false);
                     }
-                    alert("Fitur kirim email akan segera tersedia. Survey sudah diaktifkan.");
+                    setSending(true);
+                    const res = await fetch(`/api/surveys/${id}/send-email`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ recipientId: emailPreviewRecipient?.id }),
+                    });
+                    const data = await res.json();
+                    setSending(false);
+                    if (res.ok && data.successCount > 0) {
+                      alert(`Email berhasil dikirim ke ${emailPreviewRecipient?.name}.`);
+                    } else {
+                      alert(`Gagal kirim email: ${data.error || data.results?.[0]?.error || "Unknown error"}`);
+                    }
                     setEmailPreviewRecipient(null);
                   }}
                   disabled={sending}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition"
                 >
-                  {isDraft ? "Aktifkan & Kirim Email" : "Kirim Email"}
+                  {sending ? "Mengirim..." : isDraft ? "Aktifkan & Kirim Email" : "Kirim Email"}
                 </button>
               </div>
             </div>
