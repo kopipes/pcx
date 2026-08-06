@@ -69,7 +69,7 @@ export async function POST(
 
     try {
       await resend.emails.send({
-        from: "Provaliant Client Experience <noreply@provaliantgroup.com>",
+        from: "Provaliant Client Experience <no-reply@provaliantgroup.com>",
         to: recipient.email,
         subject: `Undangan Survei Kepuasan Klien — ${survey.clientCompany}`,
         html: `
