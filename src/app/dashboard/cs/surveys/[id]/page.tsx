@@ -352,8 +352,13 @@ export default function SurveyDetailPage() {
   async function handleDeleteRecipient(rid: string) {
     if (!confirm("Hapus penerima ini?")) return;
     setDeletingRecipient(rid);
-    await fetch(`/api/surveys/${id}/recipients/${rid}`, { method: "DELETE" });
-    setRecipients(prev => prev.filter(r => r.id !== rid));
+    const res = await fetch(`/api/surveys/${id}/recipients/${rid}`, { method: "DELETE" });
+    if (res.ok) {
+      setRecipients(prev => prev.filter(r => r.id !== rid));
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || "Gagal menghapus penerima.");
+    }
     setDeletingRecipient(null);
   }
 
@@ -1035,6 +1040,7 @@ export default function SurveyDetailPage() {
                 <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 space-y-1">
                   <div className="flex gap-2"><span className="text-gray-400 w-12 flex-shrink-0">Dari:</span><span className="text-gray-700">Provaliant Client Experience &lt;noreply@provaliantgroup.com&gt;</span></div>
                   <div className="flex gap-2"><span className="text-gray-400 w-12 flex-shrink-0">Kepada:</span><span className="text-gray-700">{emailPreviewRecipient.name}{emailPreviewRecipient.email ? ` <${emailPreviewRecipient.email}>` : ""}</span></div>
+                  {emailPreviewRecipient.company && <div className="flex gap-2"><span className="text-gray-400 w-12 flex-shrink-0">Instansi:</span><span className="text-gray-700">{emailPreviewRecipient.company}</span></div>}
                   <div className="flex gap-2"><span className="text-gray-400 w-12 flex-shrink-0">Subjek:</span><span className="text-gray-700 font-medium">Undangan Survei Kepuasan Klien — {survey.clientCompany}</span></div>
                 </div>
                 {/* Email body */}
