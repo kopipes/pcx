@@ -367,6 +367,7 @@ export default function SurveyDetailPage() {
   const surveyUrl = survey.token ? `${window.location.origin}/survey/${survey.token}` : null;
   const isDraft = survey.status === "DRAFT";
   const isSent = survey.status === "SENT";
+  const hasRecipients = recipients.length > 0;
 
   return (
     <div className="max-w-3xl">
@@ -438,11 +439,11 @@ export default function SurveyDetailPage() {
             ) : (
               <button onClick={handleSend} disabled={sending}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition">
-                {sending ? "Mengaktifkan..." : "▶ Kirim / Aktifkan Link"}
+                {sending ? "Mengaktifkan..." : "▶ Aktifkan Link Umum"}
               </button>
             );
           })()}
-          {(isSent || survey.status === "COMPLETED") && surveyUrl && (
+          {(isSent || survey.status === "COMPLETED") && surveyUrl && !hasRecipients && (
             <button onClick={copyLink}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${copied ? "bg-green-500 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}>
               {copied ? "✓ Link Tersalin!" : "⧉ Salin Magic Link"}
@@ -496,27 +497,35 @@ export default function SurveyDetailPage() {
           </form>
         )}
 
-        {(isSent || survey.status === "COMPLETED") && surveyUrl && (
-          <div className="mt-4 bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-xs text-gray-500">Magic Link Klien</div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${survey.allowMultiple ? "bg-blue-100 text-blue-700" : "bg-gray-200 text-gray-600"}`}>
-                {survey.allowMultiple ? "Link Umum — bisa diisi banyak orang" : "Link Per Orang — 1 kali submit"}
-              </span>
+        {(isSent || survey.status === "COMPLETED") && surveyUrl && !hasRecipients && (
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🌐</span>
+              <div className="text-sm font-semibold text-blue-900">Survei Umum</div>
             </div>
-            <code className="text-xs text-gray-700 break-all">{surveyUrl}</code>
-            <div className="text-xs text-gray-400 mt-1">
-              {survey.allowMultiple
-                ? `Aktif hingga: ${formatDate(survey.expiresAt)} · Dapat diisi berkali-kali`
-                : isSent ? `Aktif hingga: ${formatDate(survey.expiresAt)}` : "Survei sudah diisi klien"}
+            <div className="text-xs text-blue-700 mb-2">Magic Link untuk distribusi publik — dapat diisi berkali-kali oleh siapa saja</div>
+            <code className="block text-xs text-blue-900 bg-white rounded px-3 py-2 break-all border border-blue-200">{surveyUrl}</code>
+            <div className="text-xs text-blue-600 mt-2">
+              Aktif hingga: {formatDate(survey.expiresAt)}
             </div>
+          </div>
+        )}
+        {survey.status === "COMPLETED" && hasRecipients && surveyUrl && (
+          <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center justify-between gap-3">
+            <div className="text-xs text-gray-400 truncate font-mono">{surveyUrl}</div>
+            <button onClick={copyLink}
+              className={`text-xs px-2 py-1 rounded flex-shrink-0 transition ${copied ? "bg-green-100 text-green-700" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}>
+              {copied ? "✓ Tersalin" : "Salin URL"}
+            </button>
           </div>
         )}
         {isDraft && (
           <div className="mt-4 bg-amber-50 border border-amber-100 rounded-lg p-3 text-xs text-amber-700">
-            {recipients.filter(r => r.email && r.status !== "COMPLETED").length > 0
-              ? <>Draft belum aktif. Susun pertanyaan, tambah penerima, lalu klik <strong>"Aktifkan & Kirim Email"</strong> untuk mengaktifkan dan mengirim undangan ke semua penerima.</>
-              : <>Draft belum aktif. Susun pertanyaan di bawah, lalu klik <strong>"Kirim / Aktifkan Link"</strong>.</>
+            {hasRecipients
+              ? recipients.filter(r => r.email && r.status !== "COMPLETED").length > 0
+                ? <>Draft belum aktif. Susun pertanyaan, lalu klik <strong>"Aktifkan & Kirim Email"</strong> untuk mengaktifkan dan mengirim undangan ke semua penerima.</>
+                : <>Draft belum aktif. Sudah ada penerima terdaftar. Susun pertanyaan lalu aktifkan survei.</>
+              : <>Draft belum aktif. Tambahkan penerima spesifik di bawah untuk survei per orang, atau susun pertanyaan lalu klik <strong>"Aktifkan Link"</strong> untuk survei umum.</>
             }
           </div>
         )}
@@ -713,8 +722,8 @@ export default function SurveyDetailPage() {
         {recipients.length === 0 ? (
           <div className="text-xs text-gray-400 py-2">
             {isSent
-              ? "Tidak ada penerima terdaftar. Gunakan magic link survei di atas untuk distribusi umum, atau tambahkan penerima spesifik di sini."
-              : "Tambahkan penerima setelah survei diaktifkan, atau aktifkan dulu lalu tambahkan penerima."}
+              ? "Belum ada penerima. Magic link umum aktif di atas. Tambahkan penerima untuk beralih ke mode per orang — magic link akan otomatis disembunyikan."
+              : "Tambahkan penerima untuk survei per orang. Kosongkan untuk survei umum (magic link aktif setelah diaktifkan)."}
           </div>
         ) : (
           <div className="space-y-2">

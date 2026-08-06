@@ -40,13 +40,14 @@ export default function CreateSurveyPage() {
   const [projectId, setProjectId] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [notes, setNotes] = useState("");
-  const [allowMultiple, setAllowMultiple] = useState(false);
   const [loading, setLoading] = useState(false);
   const [surveysLoading, setSurveysLoading] = useState(true);
   const [pendingQuestions, setPendingQuestions] = useState<{ type: string; label: string; required: boolean; options?: string }[]>([]);
   const [reuseSource, setReuseSource] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ id: string; token: string } | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     Promise.all([
@@ -66,7 +67,7 @@ export default function CreateSurveyPage() {
     const res = await fetch("/api/surveys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId, expiresInDays, notes, allowMultiple, asDraft: true }),
+      body: JSON.stringify({ projectId, expiresInDays, notes, asDraft: true }),
     });
     let data: { error?: string; id?: string; token?: string } = {};
     try { data = await res.json(); } catch { /* empty body */ }
@@ -110,7 +111,9 @@ export default function CreateSurveyPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const surveyUrl = success ? `${typeof window !== "undefined" ? window.location.origin : ""}/survey/${success.token}` : "";
+  const sortedSurveys = surveys.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const totalPages = Math.ceil(sortedSurveys.length / PAGE_SIZE);
+  const pagedSurveys = sortedSurveys.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="flex gap-6 items-start">
@@ -151,27 +154,6 @@ export default function CreateSurveyPage() {
                 placeholder="Mis: survei untuk project phase 2..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
               />
-            </div>
-
-            {/* Mode distribusi link */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mode Link</label>
-              <div className="grid grid-cols-2 gap-2">
-                <label className={`flex items-start gap-2 p-3 rounded-lg border-2 cursor-pointer transition text-xs ${!allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
-                  <input type="radio" name="linkMode" checked={!allowMultiple} onChange={() => setAllowMultiple(false)} className="mt-0.5 text-indigo-600" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Link Per Orang</div>
-                    <div className="text-gray-500 mt-0.5">Satu link diisi satu kali. Gunakan fitur Penerima untuk kirim ke banyak orang.</div>
-                  </div>
-                </label>
-                <label className={`flex items-start gap-2 p-3 rounded-lg border-2 cursor-pointer transition text-xs ${allowMultiple ? "border-indigo-500 bg-indigo-50" : "border-gray-200 hover:border-gray-300"}`}>
-                  <input type="radio" name="linkMode" checked={allowMultiple} onChange={() => setAllowMultiple(true)} className="mt-0.5 text-indigo-600" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Link Umum</div>
-                    <div className="text-gray-500 mt-0.5">Satu link bisa diisi banyak orang. Setiap orang mengisi identitas sendiri.</div>
-                  </div>
-                </label>
-              </div>
             </div>
 
             {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{error}</div>}
@@ -240,44 +222,78 @@ export default function CreateSurveyPage() {
             Belum ada survei.
           </div>
         ) : (
-          <div className="space-y-2">
-            {surveys.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((s) => (
-              <div key={s.id} className={`bg-white rounded-xl border px-4 py-3 flex items-center gap-4 ${reuseSource === s.id ? "border-indigo-300 bg-indigo-50" : "border-gray-200"}`}>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-gray-900 text-sm truncate">{s.clientCompany}</span>
-                    <span className="text-gray-300">·</span>
-                    <span className="text-xs text-gray-500 truncate">{s.projectName}</span>
+          <>
+            <div className="space-y-2">
+              {pagedSurveys.map((s) => (
+                <div key={s.id} className={`bg-white rounded-xl border px-4 py-3 flex items-center gap-4 ${reuseSource === s.id ? "border-indigo-300 bg-indigo-50" : "border-gray-200"}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-gray-900 text-sm truncate">{s.clientCompany}</span>
+                      <span className="text-gray-300">·</span>
+                      <span className="text-xs text-gray-500 truncate">{s.projectName}</span>
+                    </div>
+                    {s.notes && <div className="text-xs text-gray-400 mt-0.5 truncate">{s.notes}</div>}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-gray-400">{formatDate(s.createdAt)}</span>
+                      {s.questionCount > 0 ? (
+                        <span className="text-xs text-indigo-600 font-medium">{s.questionCount} pertanyaan</span>
+                      ) : (
+                        <span className="text-xs text-gray-300">0 pertanyaan</span>
+                      )}
+                    </div>
                   </div>
-                  {s.notes && <div className="text-xs text-gray-400 mt-0.5 truncate">{s.notes}</div>}
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-400">{formatDate(s.createdAt)}</span>
-                    {s.questionCount > 0 ? (
-                      <span className="text-xs text-indigo-600 font-medium">{s.questionCount} pertanyaan</span>
-                    ) : (
-                      <span className="text-xs text-gray-300">0 pertanyaan</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[s.status]}`}>
+                      {statusLabel[s.status]}
+                    </span>
+                    <Link href={`/dashboard/cs/surveys/${s.id}`} className="text-xs text-indigo-600 hover:underline font-medium px-2 py-1 rounded hover:bg-indigo-50 transition">
+                      Detail
+                    </Link>
+                    {s.questionCount > 0 && (
+                      <button
+                        onClick={() => reuseAsDraft(s)}
+                        className={`text-xs font-medium px-2 py-1 rounded border transition ${reuseSource === s.id ? "bg-indigo-600 text-white border-indigo-600" : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50 border-gray-200"}`}
+                      >
+                        {reuseSource === s.id ? "✓ Dipilih" : "Gunakan Lagi"}
+                      </button>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[s.status]}`}>
-                    {statusLabel[s.status]}
-                  </span>
-                  <Link href={`/dashboard/cs/surveys/${s.id}`} className="text-xs text-indigo-600 hover:underline font-medium px-2 py-1 rounded hover:bg-indigo-50 transition">
-                    Detail
-                  </Link>
-                  {s.questionCount > 0 && (
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-xs text-gray-400">
+                  {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, sortedSurveys.length)} dari {sortedSurveys.length} survei
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    ← Sebelumnya
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                     <button
-                      onClick={() => reuseAsDraft(s)}
-                      className={`text-xs font-medium px-2 py-1 rounded border transition ${reuseSource === s.id ? "bg-indigo-600 text-white border-indigo-600" : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50 border-gray-200"}`}
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`w-7 h-7 text-xs rounded border transition ${p === page ? "bg-indigo-600 text-white border-indigo-600" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
                     >
-                      {reuseSource === s.id ? "✓ Dipilih" : "Gunakan Lagi"}
+                      {p}
                     </button>
-                  )}
+                  ))}
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="px-2 py-1 text-xs rounded border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  >
+                    Berikutnya →
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
