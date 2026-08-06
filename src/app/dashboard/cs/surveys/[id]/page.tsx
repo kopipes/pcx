@@ -1020,15 +1020,15 @@ export default function SurveyDetailPage() {
       {/* Email Template Modal */}
       {emailPreviewRecipient && survey && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
               <div>
                 <div className="font-semibold text-gray-900">Preview Template Email</div>
                 <div className="text-xs text-gray-400 mt-0.5">Kepada: {emailPreviewRecipient.name} · {emailPreviewRecipient.email}</div>
               </div>
               <button onClick={() => setEmailPreviewRecipient(null)} className="text-gray-400 hover:text-gray-700 text-xl font-bold px-2">✕</button>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto">
               {/* Email preview */}
               <div className="border border-gray-200 rounded-xl overflow-hidden text-sm">
                 {/* Email header */}
@@ -1039,7 +1039,7 @@ export default function SurveyDetailPage() {
                 </div>
                 {/* Email body */}
                 <div className="p-5 space-y-4 text-gray-700 leading-relaxed">
-                  <p>Yth. Bapak/Ibu <strong>{emailPreviewRecipient.name}</strong>{emailPreviewRecipient.company ? ` dari <strong>${emailPreviewRecipient.company}</strong>` : ""},</p>
+                  <p>Yth. Bapak/Ibu <strong>{emailPreviewRecipient.name}</strong>{emailPreviewRecipient.company ? <> dari <strong>{emailPreviewRecipient.company}</strong></> : ""},</p>
                   <p>Terima kasih atas kepercayaan Anda dalam menggunakan layanan <strong>Provaliant</strong> untuk proyek <strong>{survey.projectName}</strong>.</p>
                   <p>Kami ingin mendapatkan masukan dan penilaian Anda mengenai kualitas layanan yang telah kami berikan. Penilaian Anda sangat berharga bagi kami untuk terus meningkatkan standar layanan.</p>
                   <p>Silakan klik tombol di bawah ini untuk mengisi survei. Proses pengisian hanya membutuhkan waktu <strong>2–3 menit</strong>.</p>
