@@ -43,13 +43,6 @@ interface SurveyDetail {
   responses: ResponseItem[];
 }
 
-interface BuUser {
-  id: string;
-  name: string;
-  email: string;
-  businessUnitId: string | null;
-}
-
 interface ResponseItem {
   id: string;
   scoreOverall: number | null;
@@ -195,7 +188,6 @@ export default function SurveyDetailPage() {
   const [showPreview, setShowPreview] = useState(false);
   // Email template modal
   const [emailPreviewRecipient, setEmailPreviewRecipient] = useState<Recipient | null>(null);
-  const [buUsers, setBuUsers] = useState<BuUser[]>([]);
 
   const loadSurvey = useCallback(async () => {
     const [sRes, qRes, tRes, rRes] = await Promise.all([
@@ -210,15 +202,6 @@ export default function SurveyDetailPage() {
     setTemplates(Array.isArray(tRes) ? tRes : []);
     setRecipients(Array.isArray(rRes) ? rRes : []);
     setLoading(false);
-    // Fetch BU users for recipient email suggestions
-    if (sRes.businessUnitId) {
-      fetch(`/api/users`)
-        .then(r => r.json())
-        .then((allUsers: BuUser[]) => {
-          setBuUsers(allUsers.filter(u => u.businessUnitId === sRes.businessUnitId));
-        })
-        .catch(() => {});
-    }
   }, [id]);
 
   useEffect(() => { loadSurvey(); }, [loadSurvey]);
@@ -693,13 +676,6 @@ export default function SurveyDetailPage() {
         {showAddRecipient && (
           <form onSubmit={handleAddRecipients} className="mb-4 border border-indigo-100 rounded-lg p-4 bg-indigo-50 space-y-3">
             <div className="text-xs font-semibold text-indigo-700 mb-1">Tambah Penerima — setiap penerima mendapat link unik yang tersembunyi</div>
-            {buUsers.length > 0 && (
-              <datalist id="bu-users-list">
-                {buUsers.map(u => (
-                  <option key={u.id} value={u.email} label={u.name} />
-                ))}
-              </datalist>
-            )}
             {recipientRows.map((row, i) => (
               <div key={i} className="grid grid-cols-3 gap-2 items-center">
                 <input
@@ -717,19 +693,8 @@ export default function SurveyDetailPage() {
                 <div className="flex gap-2">
                   <input
                     type="email"
-                    list={buUsers.length > 0 ? "bu-users-list" : undefined}
                     value={row.email}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setRecipientRows(prev => prev.map((r, idx) => {
-                        if (idx !== i) return r;
-                        // Auto-fill name if user picks from datalist
-                        const matched = buUsers.find(u => u.email === val);
-                        return matched && !r.name
-                          ? { ...r, email: val, name: matched.name }
-                          : { ...r, email: val };
-                      }));
-                    }}
+                    onChange={(e) => setRecipientRows(prev => prev.map((r, idx) => idx === i ? { ...r, email: e.target.value } : r))}
                     placeholder="Email"
                     className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
                   />
