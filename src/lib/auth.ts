@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { db } from "@/db";
-import { users, userRoles } from "@/db/schema";
+import { users, userRoles, userBusinessUnits } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
@@ -45,19 +45,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .where(eq(userRoles.userId, user.id))
           .all();
 
+        // Fetch additional BU assignments
+        const additionalBUs = await db
+          .select({ businessUnitId: userBusinessUnits.businessUnitId })
+          .from(userBusinessUnits)
+          .where(eq(userBusinessUnits.userId, user.id))
+          .all();
+
         // Merge primary role + additional roles (deduplicated)
         const allRoles = Array.from(new Set([
           user.role as UserRole,
           ...additionalRoles.map(r => r.role as UserRole),
         ]));
 
+        // Merge primary BU + additional BUs (deduplicated)
+        const allBusinessUnitIds = Array.from(new Set([
+          ...(user.businessUnitId ? [user.businessUnitId] : []),
+          ...additionalBUs.map(b => b.businessUnitId),
+        ]));
+
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,       // primary role
-          roles: allRoles,       // all roles
+          role: user.role,
+          roles: allRoles,
           businessUnitId: user.businessUnitId,
+          businessUnitIds: allBusinessUnitIds,
         };
       },
     }),
@@ -68,6 +82,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = (user as { role: UserRole }).role;
         token.roles = (user as { roles: UserRole[] }).roles;
         token.businessUnitId = (user as { businessUnitId: string | null }).businessUnitId;
+        token.businessUnitIds = (user as { businessUnitIds: string[] }).businessUnitIds;
       }
       return token;
     },
@@ -77,6 +92,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as UserRole;
         session.user.roles = (token.roles as UserRole[]) || [token.role as UserRole];
         session.user.businessUnitId = token.businessUnitId as string | null;
+        session.user.businessUnitIds = (token.businessUnitIds as string[]) || (token.businessUnitId ? [token.businessUnitId as string] : []);
       }
       return session;
     },

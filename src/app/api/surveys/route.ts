@@ -12,6 +12,7 @@ export async function GET() {
   const role = session.user.role;
   const roles = session.user.roles || [role];
   const buId = session.user.businessUnitId;
+  const buIds = session.user.businessUnitIds || (buId ? [buId] : []);
 
   const baseQuery = db
     .select({
@@ -30,10 +31,16 @@ export async function GET() {
     .from(surveys)
     .leftJoin(projects, eq(surveys.projectId, projects.id));
 
-  // BU_HEAD and CS only see surveys in their BU; others see all
-  const allSurveys = (role === "BU_HEAD" || role === "CS") && buId
-    ? await baseQuery.where(eq(projects.businessUnitId, buId)).all()
-    : await baseQuery.all();
+  // BU_HEAD and CS scoped to their BUs; others see all
+  const isScopedRole = (roles.includes("BU_HEAD") || roles.includes("CS")) && !roles.includes("ADMIN") && !roles.includes("DIRECTOR");
+  let allSurveys;
+  if (isScopedRole && buIds.length > 0) {
+    // Fetch all and filter in JS since SQLite doesn't support IN with dynamic params easily
+    const all = await baseQuery.all();
+    allSurveys = all.filter(s => buIds.includes(s.businessUnitId ?? ""));
+  } else {
+    allSurveys = await baseQuery.all();
+  }
 
   return NextResponse.json(allSurveys);
 }

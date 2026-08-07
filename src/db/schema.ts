@@ -29,6 +29,13 @@ export const userRoles = sqliteTable("user_roles", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+export const userBusinessUnits = sqliteTable("user_business_units", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  businessUnitId: text("business_unit_id").notNull().references(() => businessUnits.id),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 export const surveyRecipients = sqliteTable("survey_recipients", {
   id: text("id").primaryKey(),
   surveyId: text("survey_id").notNull().references(() => surveys.id),

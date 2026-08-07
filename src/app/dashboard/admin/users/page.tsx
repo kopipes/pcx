@@ -23,7 +23,7 @@ const roleColors: Record<string, string> = {
   ADMIN: "bg-indigo-50 text-indigo-700",
 };
 
-type EditForm = { name: string; email: string; role: string; additionalRoles: string[]; businessUnitId: string; password: string };
+type EditForm = { name: string; email: string; role: string; additionalRoles: string[]; businessUnitId: string; additionalBUs: string[]; password: string };
 
 function RoleCheckboxes({ selected, primary, onChange }: {
   selected: string[];
@@ -61,9 +61,47 @@ function RoleCheckboxes({ selected, primary, onChange }: {
   );
 }
 
-export default function AdminUsersPage() {
+function BuCheckboxes({ selected, primary, allBUs, onChange }: {
+  selected: string[];
+  primary: string;
+  allBUs: { id: string; name: string }[];
+  onChange: (buIds: string[]) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {allBUs.map(bu => {
+        const isPrimary = bu.id === primary;
+        const isChecked = selected.includes(bu.id) || isPrimary;
+        return (
+          <label key={bu.id} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium cursor-pointer transition ${
+            isChecked ? "bg-purple-50 text-purple-700 border-current" : "border-gray-200 text-gray-400 hover:border-gray-300"
+          } ${isPrimary ? "opacity-70 cursor-not-allowed" : ""}`}>
+            <input
+              type="checkbox"
+              checked={isChecked}
+              disabled={isPrimary}
+              onChange={(e) => {
+                if (isPrimary) return;
+                const updated = e.target.checked
+                  ? [...selected, bu.id]
+                  : selected.filter(x => x !== bu.id);
+                onChange(updated);
+              }}
+              className="w-3 h-3"
+            />
+            {bu.name}
+            {isPrimary && <span className="text-xs opacity-60">(home)</span>}
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+
   const [users, setUsers] = useState<User[]>([]);
   const [userRolesMap, setUserRolesMap] = useState<Record<string, string[]>>({});
+  const [userBUsMap, setUserBUsMap] = useState<Record<string, string[]>>({});
   const [businessUnits, setBusinessUnits] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -71,7 +109,7 @@ export default function AdminUsersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({ name: "", email: "", role: "", additionalRoles: [], businessUnitId: "", password: "" });
+  const [editForm, setEditForm] = useState<EditForm>({ name: "", email: "", role: "", additionalRoles: [], businessUnitId: "", additionalBUs: [], password: "" });
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function load() {
@@ -83,16 +121,25 @@ export default function AdminUsersPage() {
     setBusinessUnits(bu);
     setLoading(false);
 
-    // Load additional roles for all users
+    // Load additional roles and BU assignments for all users
     const rolesMap: Record<string, string[]> = {};
+    const busMap: Record<string, string[]> = {};
     await Promise.all(u.map(async (user: User) => {
-      const res = await fetch(`/api/users/${user.id}/roles`);
-      if (res.ok) {
-        const roles = await res.json();
+      const [rolesRes, busRes] = await Promise.all([
+        fetch(`/api/users/${user.id}/roles`),
+        fetch(`/api/users/${user.id}/business-units`),
+      ]);
+      if (rolesRes.ok) {
+        const roles = await rolesRes.json();
         rolesMap[user.id] = roles.map((r: { role: string }) => r.role);
+      }
+      if (busRes.ok) {
+        const bus = await busRes.json();
+        busMap[user.id] = bus.map((b: { businessUnitId: string }) => b.businessUnitId);
       }
     }));
     setUserRolesMap(rolesMap);
+    setUserBUsMap(busMap);
   }
 
   useEffect(() => { load(); }, []);
@@ -116,7 +163,8 @@ export default function AdminUsersPage() {
   async function startEdit(u: User) {
     setEditingId(u.id);
     const additionalRoles = userRolesMap[u.id] || [];
-    setEditForm({ name: u.name, email: u.email, role: u.role, additionalRoles, businessUnitId: u.businessUnitId || "", password: "" });
+    const additionalBUs = userBUsMap[u.id] || [];
+    setEditForm({ name: u.name, email: u.email, role: u.role, additionalRoles, businessUnitId: u.businessUnitId || "", additionalBUs, password: "" });
     setError("");
   }
 
@@ -141,12 +189,20 @@ export default function AdminUsersPage() {
     });
     if (!res.ok) { setError((await res.json()).error); setSaving(false); return; }
 
-    // Save additional roles (excluding primary which is already in users.role)
+    // Save additional roles (excluding primary)
     const additionalRoles = editForm.additionalRoles.filter(r => r !== editForm.role);
     await fetch(`/api/users/${editingId}/roles`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roles: additionalRoles }),
+    });
+
+    // Save additional BU assignments (excluding primary BU)
+    const additionalBUs = editForm.additionalBUs.filter(b => b !== editForm.businessUnitId);
+    await fetch(`/api/users/${editingId}/business-units`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessUnitIds: additionalBUs }),
     });
 
     await load();
@@ -288,6 +344,22 @@ export default function AdminUsersPage() {
                                 primary={editForm.role}
                                 onChange={(roles) => setEditForm({ ...editForm, additionalRoles: roles })}
                               />
+                            </div>
+
+                            {/* Multi-BU checkboxes — only relevant for BU_HEAD */}
+                            {(editForm.role === "BU_HEAD" || editForm.additionalRoles.includes("BU_HEAD")) && (
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-2">
+                                  Divisi Tambahan <span className="text-gray-400 font-normal">(BU Head dapat mengelola beberapa divisi)</span>
+                                </label>
+                                <BuCheckboxes
+                                  selected={editForm.additionalBUs}
+                                  primary={editForm.businessUnitId}
+                                  allBUs={businessUnits}
+                                  onChange={(buIds) => setEditForm({ ...editForm, additionalBUs: buIds })}
+                                />
+                              </div>
+                            )}
                             </div>
 
                             {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-xs">{error}</div>}

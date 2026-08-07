@@ -7,15 +7,17 @@ declare module "next-auth" {
       id: string;
       name: string;
       email: string;
-      role: UserRole;        // primary role
-      roles: UserRole[];     // all assigned roles
+      role: UserRole;
+      roles: UserRole[];
       businessUnitId: string | null;
+      businessUnitIds: string[];
     };
   }
   interface User {
     role: UserRole;
     roles: UserRole[];
     businessUnitId: string | null;
+    businessUnitIds: string[];
   }
 }
 
@@ -24,5 +26,6 @@ declare module "next-auth/jwt" {
     role: UserRole;
     roles: UserRole[];
     businessUnitId: string | null;
+    businessUnitIds: string[];
   }
 }

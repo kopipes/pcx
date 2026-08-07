@@ -13,6 +13,11 @@ export async function GET() {
   const roles = session.user.roles || [role];
   const buId = session.user.businessUnitId;
 
+  const role = session.user.role;
+  const roles = session.user.roles || [role];
+  const buId = session.user.businessUnitId;
+  const buIds = session.user.businessUnitIds || (buId ? [buId] : []);
+
   const baseQuery = db
     .select({
       id: projects.id,
@@ -28,10 +33,15 @@ export async function GET() {
     .leftJoin(businessUnits, eq(projects.businessUnitId, businessUnits.id))
     .leftJoin(users, eq(projects.projectManagerId, users.id));
 
-  // CS and BU_HEAD only see projects in their BU
-  const allProjects = (role === "CS" || role === "BU_HEAD") && buId
-    ? await baseQuery.where(eq(projects.businessUnitId, buId)).all()
-    : await baseQuery.all();
+  // CS and BU_HEAD scoped to their BUs; others see all
+  const isScopedRole = (roles.includes("BU_HEAD") || roles.includes("CS")) && !roles.includes("ADMIN") && !roles.includes("DIRECTOR");
+  let allProjects;
+  if (isScopedRole && buIds.length > 0) {
+    const all = await baseQuery.all();
+    allProjects = all.filter(p => buIds.includes(p.businessUnitId ?? ""));
+  } else {
+    allProjects = await baseQuery.all();
+  }
 
   return NextResponse.json(allProjects);
 }
