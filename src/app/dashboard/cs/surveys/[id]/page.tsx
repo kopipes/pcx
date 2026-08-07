@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { formatDate, formatDateTime, getSlaStatus } from "@/lib/utils";
 
@@ -156,6 +157,8 @@ function StatusFlow({ current }: { current: string }) {
 export default function SurveyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.roles?.includes("ADMIN") ?? false;
   const [survey, setSurvey] = useState<SurveyDetail | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -357,6 +360,17 @@ export default function SurveyDetailPage() {
     setDeletingRecipient(null);
   }
 
+  async function handleDeleteSurvey() {
+    if (!confirm(`Hapus survei ini permanen? Semua data termasuk respons dan penerima akan ikut terhapus dan tidak bisa dikembalikan.`)) return;
+    const res = await fetch(`/api/surveys/${id}/detail`, { method: "DELETE" });
+    if (res.ok) {
+      router.push("/dashboard/cs");
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || "Gagal menghapus survei.");
+    }
+  }
+
   if (loading) return <div className="text-center py-12 text-gray-400">Memuat data...</div>;
   if (!survey || (survey as { error?: string }).error) return (
     <div className="text-center py-12 text-gray-400">
@@ -480,6 +494,12 @@ export default function SurveyDetailPage() {
                 {closing ? "Menutup..." : "Tutup Survei"}
               </button>
             </>
+          )}
+          {isAdmin && (
+            <button onClick={handleDeleteSurvey}
+              className="px-4 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition ml-auto">
+              🗑 Hapus Survei
+            </button>
           )}
         </div>
 

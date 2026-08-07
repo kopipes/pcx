@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { surveys, responses, projects, businessUnits, users, surveyRecipients } from "@/db/schema";
+import { surveys, responses, projects, businessUnits, users, surveyRecipients, surveyQuestions, followUps } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
@@ -94,4 +94,29 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const updated = await db.update(surveys).set(updateData).where(eq(surveys.id, id)).returning().get();
   return NextResponse.json(updated);
+}
+
+// DELETE /api/surveys/[id]/detail - Admin only, cascades all related data
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const roles = session.user.roles || [session.user.role];
+  if (!roles.includes("ADMIN")) return NextResponse.json({ error: "Forbidden — Admin only" }, { status: 403 });
+
+  const { id } = await params;
+
+  const survey = await db.select().from(surveys).where(eq(surveys.id, id)).get();
+  if (!survey) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Cascade delete: followups → responses → recipients → questions → survey
+  const surveyResponses = await db.select({ id: responses.id }).from(responses).where(eq(responses.surveyId, id)).all();
+  for (const r of surveyResponses) {
+    await db.delete(followUps).where(eq(followUps.responseId, r.id));
+  }
+  await db.delete(responses).where(eq(responses.surveyId, id));
+  await db.delete(surveyRecipients).where(eq(surveyRecipients.surveyId, id));
+  await db.delete(surveyQuestions).where(eq(surveyQuestions.surveyId, id));
+  await db.delete(surveys).where(eq(surveys.id, id));
+
+  return NextResponse.json({ success: true });
 }
