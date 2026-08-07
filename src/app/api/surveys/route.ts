@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { surveys, projects, surveyQuestions } from "@/db/schema";
+import { surveys, projects, surveyQuestions, users } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { generateId, generateToken, hashToken } from "@/lib/server-utils";
@@ -26,10 +26,12 @@ export async function GET() {
       projectName: projects.projectName,
       clientCompany: projects.clientCompany,
       businessUnitId: projects.businessUnitId,
+      createdByName: users.name,
       questionCount: sql<number>`(SELECT COUNT(*) FROM survey_questions WHERE survey_id = ${surveys.id})`,
     })
     .from(surveys)
-    .leftJoin(projects, eq(surveys.projectId, projects.id));
+    .leftJoin(projects, eq(surveys.projectId, projects.id))
+    .leftJoin(users, eq(surveys.createdBy, users.id));
 
   // BU_HEAD and CS scoped to their BUs; others see all
   const isScopedRole = (roles.includes("BU_HEAD") || roles.includes("CS")) && !roles.includes("ADMIN") && !roles.includes("DIRECTOR");

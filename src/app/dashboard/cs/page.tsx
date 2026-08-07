@@ -15,6 +15,7 @@ interface Survey {
   sentAt: string | null;
   createdAt: string;
   projectId: string;
+  createdByName: string | null;
 }
 
 const statusColor: Record<string, string> = {
@@ -148,6 +149,7 @@ export default function CSDashboard() {
               <tr>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Klien / Proyek</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Alur Status</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Pembuat</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Kadaluarsa</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Catatan</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Aksi</th>
@@ -166,6 +168,7 @@ export default function CSDashboard() {
                       : <StatusFlow current={s.status} />
                     }
                   </td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{s.createdByName || "—"}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(s.expiresAt)}</td>
                   <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{s.notes || "—"}</td>
                   <td className="px-4 py-3">
