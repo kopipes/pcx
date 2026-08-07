@@ -80,15 +80,6 @@ export default function LoginPage() {
             {loading ? "Masuk..." : "Masuk"}
           </button>
         </form>
-
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg text-xs text-gray-500 space-y-1">
-          <p className="font-medium text-gray-600 mb-2">Demo Accounts:</p>
-          <p>admin@provaliant.com / admin123</p>
-          <p>cs@provaliant.com / cs123</p>
-          <p>pm1@provaliant.com / pm123</p>
-          <p>buhead@provaliant.com / bu123</p>
-          <p>director@provaliant.com / dir123</p>
-        </div>
       </div>
     </div>
   );
