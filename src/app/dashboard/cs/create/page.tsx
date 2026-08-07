@@ -47,6 +47,7 @@ export default function CreateSurveyPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ id: string; token: string } | null>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const PAGE_SIZE = 5;
 
   useEffect(() => {
@@ -112,8 +113,15 @@ export default function CreateSurveyPage() {
   }
 
   const sortedSurveys = surveys.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const totalPages = Math.ceil(sortedSurveys.length / PAGE_SIZE);
-  const pagedSurveys = sortedSurveys.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const filteredSurveys = search.trim()
+    ? sortedSurveys.filter(s =>
+        (s.clientCompany?.toLowerCase().includes(search.toLowerCase())) ||
+        (s.projectName?.toLowerCase().includes(search.toLowerCase())) ||
+        (s.notes?.toLowerCase().includes(search.toLowerCase()))
+      )
+    : sortedSurveys;
+  const totalPages = Math.ceil(filteredSurveys.length / PAGE_SIZE);
+  const pagedSurveys = filteredSurveys.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="flex gap-6 items-start">
@@ -210,9 +218,17 @@ export default function CreateSurveyPage() {
 
       {/* RIGHT: Survey history */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold text-gray-900">Riwayat Survei</h2>
           <span className="text-xs text-gray-400">Klik "Gunakan Lagi" untuk menyalin pertanyaan survei sebelumnya</span>
+        </div>
+        <div className="mb-3">
+          <input
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Cari nama perusahaan, proyek, atau catatan..."
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none"
+          />
         </div>
 
         {surveysLoading ? (
@@ -220,6 +236,10 @@ export default function CreateSurveyPage() {
         ) : surveys.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
             Belum ada survei.
+          </div>
+        ) : filteredSurveys.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+            Tidak ada survei yang cocok dengan pencarian &quot;{search}&quot;.
           </div>
         ) : (
           <>
