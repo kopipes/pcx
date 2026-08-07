@@ -69,6 +69,7 @@ export default function CSDashboard() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("ALL");
+  const [search, setSearch] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -76,7 +77,14 @@ export default function CSDashboard() {
   }, []);
 
   const filtered = filter === "ALL" ? surveys : surveys.filter((s) => s.status === filter);
-  const sorted = filtered.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const searched = search.trim()
+    ? filtered.filter(s =>
+        s.clientCompany?.toLowerCase().includes(search.toLowerCase()) ||
+        s.projectName?.toLowerCase().includes(search.toLowerCase()) ||
+        s.notes?.toLowerCase().includes(search.toLowerCase())
+      )
+    : filtered;
+  const sorted = searched.slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const counts = {
     ALL: surveys.length,
@@ -117,11 +125,21 @@ export default function CSDashboard() {
         ))}
       </div>
 
+      {/* Search */}
+      <div className="mb-4">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Cari nama perusahaan, proyek, atau catatan..."
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none bg-white"
+        />
+      </div>
+
       {loading ? (
         <div className="text-center py-12 text-gray-400">Memuat data...</div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-gray-200">
-          {filter === "ALL" ? "Belum ada survei." : `Tidak ada survei berstatus ${statusLabel[filter]}.`}
+          {search.trim() ? `Tidak ada survei yang cocok dengan "${search}".` : filter === "ALL" ? "Belum ada survei." : `Tidak ada survei berstatus ${statusLabel[filter]}.`}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
