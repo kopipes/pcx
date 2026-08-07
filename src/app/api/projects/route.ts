@@ -40,12 +40,18 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const roles = session.user.roles || [session.user.role];
-  if (!roles.some(r => ["CS","ADMIN"].includes(r))) {
+  if (!roles.some(r => ["BU_HEAD", "ADMIN"].includes(r))) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await req.json();
-  const { clientCompany, projectName, businessUnitId, projectManagerId } = body;
+  const { clientCompany, projectName, projectManagerId } = body;
+
+  // BU_HEAD always uses their own BU; ADMIN can pass businessUnitId explicitly
+  const isBuHead = roles.includes("BU_HEAD") && !roles.includes("ADMIN");
+  const businessUnitId = isBuHead ? session.user.businessUnitId : body.businessUnitId;
+
+  if (!businessUnitId) return NextResponse.json({ error: "Business unit wajib diisi" }, { status: 400 });
 
   const project = await db
     .insert(projects)

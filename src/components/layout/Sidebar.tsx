@@ -26,6 +26,9 @@ const navByRole: Record<string, NavSection[]> = {
     { section: "Analitik", icon: "📊", items: [
       { label: "Analitik BU", href: "/dashboard/bu" },
     ]},
+    { section: "Proyek", icon: "📁", items: [
+      { label: "Proyek BU", href: "/dashboard/bu/projects" },
+    ]},
     { section: "Follow-up", icon: "✅", items: [
       { label: "Follow-up BU", href: "/dashboard/bu/followups" },
     ]},
