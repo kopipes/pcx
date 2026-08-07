@@ -1068,20 +1068,25 @@ export default function SurveyDetailPage() {
                         body: JSON.stringify({ action: "send" }),
                       });
                       await loadSurvey();
-                    }
-                    setSending(true);
-                    const res = await fetch(`/api/surveys/${id}/send-email`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ recipientId: emailPreviewRecipient?.id }),
-                    });
-                    const data = await res.json();
-                    setSending(false);
-                    if (res.ok && data.successCount > 0) {
-                      alert(`Email berhasil dikirim ke ${emailPreviewRecipient?.name}.`);
                     } else {
-                      alert(`Gagal kirim email: ${data.error || data.results?.[0]?.error || "Unknown error"}`);
+                      setSending(true);
                     }
+                    try {
+                      const res = await fetch(`/api/surveys/${id}/send-email`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ recipientId: emailPreviewRecipient?.id }),
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.successCount > 0) {
+                        alert(`Email berhasil dikirim ke ${emailPreviewRecipient?.name}.`);
+                      } else {
+                        alert(`Gagal kirim email: ${data.error || data.results?.[0]?.error || "Unknown error"}`);
+                      }
+                    } catch (e) {
+                      alert(`Error: ${e instanceof Error ? e.message : "Unknown error"}`);
+                    }
+                    setSending(false);
                     setEmailPreviewRecipient(null);
                   }}
                   disabled={sending}
