@@ -80,7 +80,9 @@ export async function POST(
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 32px 16px;">
   <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
     <div style="background: #4f46e5; padding: 32px; text-align: center;">
-      <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 14px; font-size: 24px; font-weight: bold; color: white; margin-bottom: 12px;">P</div>
+      <div style="display: table; margin: 0 auto 12px auto; width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 14px;">
+        <span style="display: table-cell; vertical-align: middle; text-align: center; font-size: 24px; font-weight: bold; color: white;">P</span>
+      </div>
       <h1 style="color: white; margin: 0; font-size: 20px; font-weight: 700;">Survei Kepuasan Klien</h1>
       <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 13px;">Provaliant Client Experience</p>
     </div>
