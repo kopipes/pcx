@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { formatDate } from "@/lib/utils";
 
 interface Project {
@@ -15,6 +16,7 @@ interface Project {
 }
 
 export default function BuProjectsPage() {
+  const { data: session } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
   const [pms, setPms] = useState<{ id: string; name: string; businessUnitId: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +31,15 @@ export default function BuProjectsPage() {
       fetch("/api/users").then((r) => r.json()),
     ]);
     setProjects(Array.isArray(p) ? p : []);
-    setPms(Array.isArray(u) ? u.filter((x: { role: string }) => x.role === "PM") : []);
+    // Only show PMs from the same BU
+    const buId = session?.user?.businessUnitId;
+    setPms(Array.isArray(u) ? u.filter((x: { role: string; businessUnitId: string | null }) =>
+      x.role === "PM" && (!buId || x.businessUnitId === buId)
+    ) : []);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (session !== undefined) load(); }, [session]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
