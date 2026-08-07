@@ -24,6 +24,7 @@ export async function POST(
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const { recipientId } = body;
+  console.log(`[send-email] POST called — surveyId: ${id}, recipientId: ${recipientId}`);
 
   // Load survey + project
   const survey = await db
