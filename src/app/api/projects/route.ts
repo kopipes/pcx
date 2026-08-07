@@ -12,10 +12,6 @@ export async function GET() {
   const role = session.user.role;
   const roles = session.user.roles || [role];
   const buId = session.user.businessUnitId;
-
-  const role = session.user.role;
-  const roles = session.user.roles || [role];
-  const buId = session.user.businessUnitId;
   const buIds = session.user.businessUnitIds || (buId ? [buId] : []);
 
   const baseQuery = db

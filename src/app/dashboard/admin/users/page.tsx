@@ -98,7 +98,7 @@ function BuCheckboxes({ selected, primary, allBUs, onChange }: {
   );
 }
 
-
+export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [userRolesMap, setUserRolesMap] = useState<Record<string, string[]>>({});
   const [userBUsMap, setUserBUsMap] = useState<Record<string, string[]>>({});
@@ -360,7 +360,6 @@ function BuCheckboxes({ selected, primary, allBUs, onChange }: {
                                 />
                               </div>
                             )}
-                            </div>
 
                             {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-3 py-2 text-xs">{error}</div>}
                             <div className="flex gap-2">
