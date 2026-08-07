@@ -47,7 +47,7 @@ export default function CreateSurveyPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<{ id: string; token: string } | null>(null);
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 5;
 
   useEffect(() => {
     Promise.all([
