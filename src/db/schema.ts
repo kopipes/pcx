@@ -79,6 +79,7 @@ export const surveys = sqliteTable("surveys", {
   expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
   status: text("status", { enum: ["DRAFT", "SENT", "COMPLETED", "EXPIRED"] }).notNull().default("DRAFT"),
   allowMultiple: integer("allow_multiple", { mode: "boolean" }).notNull().default(false),
+  mode: text("mode", { enum: ["UMUM", "PER_ORANG"] }),
   notes: text("notes"),
   templateId: text("template_id"),
   sentAt: integer("sent_at", { mode: "timestamp_ms" }),

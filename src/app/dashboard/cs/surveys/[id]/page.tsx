@@ -31,6 +31,7 @@ interface SurveyDetail {
   status: string;
   notes: string | null;
   allowMultiple: boolean | null;
+  mode: "UMUM" | "PER_ORANG" | null;
   expiresAt: string;
   sentAt: string | null;
   createdAt: string;
@@ -368,6 +369,15 @@ export default function SurveyDetailPage() {
   const isSent = survey.status === "SENT";
   const hasRecipients = recipients.length > 0;
 
+  // Mode locking: use stored mode for SENT/COMPLETED, derive from recipients for DRAFT
+  // null mode = legacy survey, fall back to hasRecipients
+  const effectiveMode: "UMUM" | "PER_ORANG" | null = survey.mode
+    ?? (hasRecipients ? "PER_ORANG" : "UMUM");
+  const isUmum = effectiveMode === "UMUM";
+  const isPerOrang = effectiveMode === "PER_ORANG";
+  // Once SENT, mode is locked — no adding recipients to UMUM, no magic link on PER_ORANG
+  const modeLocked = !isDraft;
+
   return (
     <div className="max-w-3xl">
       <div className="mb-4">
@@ -442,7 +452,7 @@ export default function SurveyDetailPage() {
               </button>
             );
           })()}
-          {(isSent || survey.status === "COMPLETED") && surveyUrl && !hasRecipients && (
+          {(isSent || survey.status === "COMPLETED") && surveyUrl && isUmum && (
             <button onClick={copyLink}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${copied ? "bg-green-500 text-white" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}>
               {copied ? "✓ Link Tersalin!" : "⧉ Salin Magic Link"}
@@ -496,7 +506,7 @@ export default function SurveyDetailPage() {
           </form>
         )}
 
-        {(isSent || survey.status === "COMPLETED") && surveyUrl && !hasRecipients && (
+        {(isSent || survey.status === "COMPLETED") && surveyUrl && isUmum && (
           <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg">🌐</span>
@@ -509,7 +519,7 @@ export default function SurveyDetailPage() {
             </div>
           </div>
         )}
-        {survey.status === "COMPLETED" && hasRecipients && surveyUrl && (
+        {survey.status === "COMPLETED" && isPerOrang && surveyUrl && (
           <div className="mt-4 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center justify-between gap-3">
             <div className="text-xs text-gray-400 truncate font-mono">{surveyUrl}</div>
             <button onClick={copyLink}
@@ -655,7 +665,7 @@ export default function SurveyDetailPage() {
                 : `${recipients.length} penerima · ${recipients.filter(r => r.status === "COMPLETED").length} sudah mengisi`}
             </p>
           </div>
-          {(isSent || isDraft) && (
+          {isDraft && (
             <button
               onClick={() => setShowAddRecipient(!showAddRecipient)}
               className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition"

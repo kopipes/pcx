@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { surveys, responses, projects, businessUnits, users } from "@/db/schema";
+import { surveys, responses, projects, businessUnits, users, surveyRecipients } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
@@ -18,6 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       token: surveys.token,
       status: surveys.status,
       notes: surveys.notes,
+      mode: surveys.mode,
       expiresAt: surveys.expiresAt,
       sentAt: surveys.sentAt,
       createdAt: surveys.createdAt,
@@ -68,6 +69,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (allowMultiple !== undefined) updateData.allowMultiple = allowMultiple;
     if (expiresInDays) updateData.expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
     if (action === "send") {
+      // Determine mode based on recipient count at activation time
+      const recipientCount = await db.select().from(surveyRecipients).where(eq(surveyRecipients.surveyId, id)).all();
+      updateData.mode = recipientCount.length > 0 ? "PER_ORANG" : "UMUM";
       updateData.status = "SENT";
       updateData.sentAt = new Date();
     }
