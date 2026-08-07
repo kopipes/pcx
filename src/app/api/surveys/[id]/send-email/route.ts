@@ -68,7 +68,7 @@ export async function POST(
     const companyLine = recipient.company ? ` dari <strong>${recipient.company}</strong>` : "";
 
     try {
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: "Provaliant Client Experience <no-reply@provaliantgroup.com>",
         to: recipient.email,
         subject: `Undangan Survei Kepuasan Klien — ${survey.clientCompany}`,
@@ -103,9 +103,11 @@ export async function POST(
 </body>
 </html>`,
       });
+      console.log(`[send-email] Resend result for ${recipient.email}:`, JSON.stringify(result));
       results.push({ id: recipient.id, name: recipient.name, email: recipient.email, success: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
+      console.error(`[send-email] Error for ${recipient.email}:`, message, err);
       results.push({ id: recipient.id, name: recipient.name, email: recipient.email, success: false, error: message });
     }
   }
