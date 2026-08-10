@@ -375,12 +375,25 @@ export default function SurveyDetailPage() {
   async function handleSendAllEmails() {
     const pendingWithEmail = recipients.filter(r => r.email && r.status !== "COMPLETED");
     if (!pendingWithEmail.length) return;
-    if (!confirm(`Kirim email ke semua ${pendingWithEmail.length} penerima?`)) return;
+
+    const alreadySent = pendingWithEmail.filter(r => r.sentAt);
+    const notYetSent = pendingWithEmail.filter(r => !r.sentAt);
+
+    let confirmMsg = "";
+    if (alreadySent.length > 0 && notYetSent.length > 0) {
+      confirmMsg = `${notYetSent.length} penerima belum pernah dikirimi email.\n${alreadySent.length} penerima sudah pernah dikirimi email sebelumnya.\n\nKirim ke semua ${pendingWithEmail.length} penerima (termasuk kirim ulang)?`;
+    } else if (alreadySent.length > 0 && notYetSent.length === 0) {
+      confirmMsg = `Semua ${alreadySent.length} penerima sudah pernah dikirimi email.\n\nKirim ulang ke semua?`;
+    } else {
+      confirmMsg = `Kirim email ke ${pendingWithEmail.length} penerima?`;
+    }
+
+    if (!confirm(confirmMsg)) return;
     setSending(true);
     const res = await fetch(`/api/surveys/${id}/send-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}), // no recipientId = send to all pending
+      body: JSON.stringify({}),
     });
     const data = await res.json();
     setSending(false);
