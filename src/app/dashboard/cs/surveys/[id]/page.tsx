@@ -371,6 +371,25 @@ export default function SurveyDetailPage() {
     }
   }
 
+  async function handleSendAllEmails() {
+    const pendingWithEmail = recipients.filter(r => r.email && r.status !== "COMPLETED");
+    if (!pendingWithEmail.length) return;
+    if (!confirm(`Kirim email ke semua ${pendingWithEmail.length} penerima?`)) return;
+    setSending(true);
+    const res = await fetch(`/api/surveys/${id}/send-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}), // no recipientId = send to all pending
+    });
+    const data = await res.json();
+    setSending(false);
+    if (res.ok && data.successCount > 0) {
+      alert(`Email berhasil dikirim ke ${data.successCount} penerima.${data.failCount > 0 ? ` ${data.failCount} gagal.` : ""}`);
+    } else {
+      alert(`Gagal kirim email: ${data.error || "Unknown error"}`);
+    }
+  }
+
   if (loading) return <div className="text-center py-12 text-gray-400">Memuat data...</div>;
   if (!survey || (survey as { error?: string }).error) return (
     <div className="text-center py-12 text-gray-400">
@@ -478,10 +497,11 @@ export default function SurveyDetailPage() {
                 const pendingWithEmail = recipients.filter(r => r.email && r.status !== "COMPLETED");
                 return pendingWithEmail.length > 0 ? (
                   <button
-                    onClick={() => setEmailPreviewRecipient(pendingWithEmail[0])}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition"
+                    onClick={handleSendAllEmails}
+                    disabled={sending}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition"
                   >
-                    ✉ Kirim Email ({pendingWithEmail.length})
+                    {sending ? "Mengirim..." : `✉ Kirim Email ke Semua (${pendingWithEmail.length})`}
                   </button>
                 ) : null;
               })()}
