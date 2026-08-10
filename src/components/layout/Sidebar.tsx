@@ -74,24 +74,24 @@ function CollapsibleSection({
   section,
   pathname,
   forceOpen,
+  onNavClick,
 }: {
   section: NavSection;
   pathname: string;
   forceOpen: boolean;
+  onNavClick?: () => void;
 }) {
   const hasActive = section.items.some(
     (item) => pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
   );
   const [open, setOpen] = useState(hasActive || forceOpen);
 
-  // Auto-open when navigating to a child route
   useEffect(() => {
     if (hasActive) setOpen(true);
   }, [hasActive]);
 
   return (
     <div className="mb-1">
-      {/* Section header — clickable to collapse/expand */}
       <button
         onClick={() => setOpen((o) => !o)}
         className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition
@@ -104,7 +104,6 @@ function CollapsibleSection({
         <span className={`text-xs transition-transform duration-200 ${open ? "rotate-90" : ""}`}>›</span>
       </button>
 
-      {/* Items */}
       {open && (
         <div className="mt-0.5 space-y-0.5 pl-2">
           {section.items.map((item) => {
@@ -113,6 +112,7 @@ function CollapsibleSection({
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={onNavClick}
                 className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition
                   ${active
                     ? "bg-indigo-50 text-indigo-700 border-l-2 border-indigo-500"
@@ -129,13 +129,12 @@ function CollapsibleSection({
   );
 }
 
-export default function Sidebar() {
+function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const role = session?.user?.role || "";
   const roles = session?.user?.roles || [role];
 
-  // Merge nav sections from all assigned roles, deduplicate by section name
   const seenSections = new Set<string>();
   const sections: NavSection[] = [];
   for (const r of roles) {
@@ -148,11 +147,10 @@ export default function Sidebar() {
     }
   }
 
-  // Force single open for single-section users
   const alwaysOpen = sections.length === 1;
 
   return (
-    <aside className="w-64 min-h-screen bg-white border-r border-gray-200 flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
@@ -172,6 +170,7 @@ export default function Sidebar() {
             section={section}
             pathname={pathname}
             forceOpen={alwaysOpen}
+            onNavClick={onNavClick}
           />
         ))}
       </nav>
@@ -189,6 +188,53 @@ export default function Sidebar() {
           Keluar
         </button>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+export default function Sidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Close drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center shadow-sm"
+        aria-label="Buka menu"
+      >
+        <span className="text-gray-600 text-lg leading-none">☰</span>
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <aside className={`lg:hidden fixed top-0 left-0 z-50 w-72 h-full bg-white border-r border-gray-200 flex flex-col transform transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <span className="font-bold text-gray-900 text-sm">Menu</span>
+          <button onClick={() => setMobileOpen(false)} className="text-gray-400 hover:text-gray-700 text-xl font-bold px-2">✕</button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <SidebarContent onNavClick={() => setMobileOpen(false)} />
+        </div>
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-64 min-h-screen bg-white border-r border-gray-200 flex-col">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

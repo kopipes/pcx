@@ -111,7 +111,7 @@ export default function CSDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-6">
         {(["ALL", "DRAFT", "SENT", "COMPLETED", "EXPIRED"] as const).map((s) => (
           <button
             key={s}
@@ -143,49 +143,75 @@ export default function CSDashboard() {
           {search.trim() ? `Tidak ada survei yang cocok dengan "${search}".` : filter === "ALL" ? "Belum ada survei." : `Tidak ada survei berstatus ${statusLabel[filter]}.`}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Klien / Proyek</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Alur Status</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Pembuat</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Kadaluarsa</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Catatan</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {sorted.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{s.clientCompany}</div>
-                    <div className="text-gray-400 text-xs">{s.projectName}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {s.status === "EXPIRED"
-                      ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">Kadaluarsa</span>
-                      : <StatusFlow current={s.status} />
-                    }
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{s.createdByName || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(s.expiresAt)}</td>
-                  <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{s.notes || "—"}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/dashboard/cs/surveys/${s.id}`}
-                        className="text-indigo-600 hover:underline text-xs font-medium"
-                      >
+        <>
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-3">
+            {sorted.map((s) => (
+              <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-4">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900 truncate">{s.clientCompany}</div>
+                    <div className="text-gray-400 text-xs mt-0.5">{s.projectName}</div>
+                  </div>
+                  <Link href={`/dashboard/cs/surveys/${s.id}`}
+                    className="flex-shrink-0 text-indigo-600 text-xs font-medium border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-50 transition">
+                    {s.status === "DRAFT" ? "Edit & Kirim" : "Detail"}
+                  </Link>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                  {s.status === "EXPIRED"
+                    ? <span className="px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-600">Kadaluarsa</span>
+                    : <StatusFlow current={s.status} />
+                  }
+                  {s.createdByName && <span className="text-gray-400">· {s.createdByName}</span>}
+                  <span className="text-gray-400">· {formatDate(s.expiresAt)}</span>
+                </div>
+                {s.notes && <div className="mt-1 text-xs text-gray-400 truncate">{s.notes}</div>}
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Klien / Proyek</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Alur Status</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Pembuat</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Kadaluarsa</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Catatan</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sorted.map((s) => (
+                  <tr key={s.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900">{s.clientCompany}</div>
+                      <div className="text-gray-400 text-xs">{s.projectName}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {s.status === "EXPIRED"
+                        ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">Kadaluarsa</span>
+                        : <StatusFlow current={s.status} />
+                      }
+                    </td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{s.createdByName || "—"}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(s.expiresAt)}</td>
+                    <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{s.notes || "—"}</td>
+                    <td className="px-4 py-3">
+                      <Link href={`/dashboard/cs/surveys/${s.id}`}
+                        className="text-indigo-600 hover:underline text-xs font-medium">
                         {s.status === "DRAFT" ? "Edit & Kirim" : "Detail"}
                       </Link>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );
