@@ -28,7 +28,7 @@ const statusColor: Record<string, string> = {
 
 const statusLabel: Record<string, string> = {
   DRAFT: "Draft",
-  SENT: "Terkirim",
+  SENT: "Aktif",
   COMPLETED: "Selesai",
   EXPIRED: "Kadaluarsa",
 };

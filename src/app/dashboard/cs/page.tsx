@@ -27,7 +27,7 @@ const statusColor: Record<string, string> = {
 
 const statusLabel: Record<string, string> = {
   DRAFT: "Draft",
-  SENT: "Terkirim",
+  SENT: "Aktif",
   COMPLETED: "Selesai",
   EXPIRED: "Kadaluarsa",
 };
@@ -56,7 +56,7 @@ function StatusFlow({ current }: { current: string }) {
               isCurrent ? "text-indigo-700 bg-indigo-50" :
               "text-gray-400 bg-gray-50"
             }`}>
-              {step === "DRAFT" ? "Draft" : step === "SENT" ? "Terkirim" : "Selesai"}
+              {step === "DRAFT" ? "Draft" : step === "SENT" ? "Aktif" : "Selesai"}
             </div>
             {i < steps.length - 1 && <span className="text-gray-300 text-xs">→</span>}
           </div>
@@ -100,7 +100,7 @@ export default function CSDashboard() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Daftar Survei</h1>
-          <p className="text-gray-500 text-sm mt-1">Kelola survei klien — Draft → Terkirim → Selesai</p>
+          <p className="text-gray-500 text-sm mt-1">Kelola survei klien — Draft → Aktif → Selesai</p>
         </div>
         <Link
           href="/dashboard/cs/create"

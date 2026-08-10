@@ -72,7 +72,7 @@ const statusColor: Record<string, string> = {
   EXPIRED: "bg-red-100 text-red-600",
 };
 const statusLabel: Record<string, string> = {
-  DRAFT: "Draft", SENT: "Terkirim", COMPLETED: "Selesai", EXPIRED: "Kadaluarsa",
+  DRAFT: "Draft", SENT: "Aktif", COMPLETED: "Selesai", EXPIRED: "Kadaluarsa",
 };
 const followUpColor: Record<string, string> = {
   NONE: "bg-gray-100 text-gray-600",
@@ -144,7 +144,7 @@ function StatusFlow({ current }: { current: string }) {
           <div key={step} className="flex items-center gap-1">
             <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isDone ? "bg-green-50 text-green-700 border-green-200" : isCurrent ? "bg-indigo-50 text-indigo-700 border-indigo-200" : "bg-gray-50 text-gray-400 border-gray-200"}`}>
               {isDone ? "✓" : isCurrent ? "●" : "○"}
-              <span className="ml-1">{step === "DRAFT" ? "Draft" : step === "SENT" ? "Terkirim" : "Selesai"}</span>
+                <span className="ml-1">{step === "DRAFT" ? "Draft" : step === "SENT" ? "Aktif" : "Selesai"}</span>
             </div>
             {i < steps.length - 1 && <span className="text-gray-300 text-xs mx-0.5">→</span>}
           </div>
@@ -476,12 +476,12 @@ export default function SurveyDetailPage() {
             return hasEmailRecipients ? (
               <button onClick={handleSend} disabled={sending}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition">
-                {sending ? "Mengaktifkan..." : `▶ Aktifkan & Kirim Email ke ${recipientsWithEmail.length} Penerima`}
+                {sending ? "Mengaktifkan..." : "▶ Aktifkan Survei"}
               </button>
             ) : (
               <button onClick={handleSend} disabled={sending}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition">
-                {sending ? "Mengaktifkan..." : "▶ Aktifkan Link Umum"}
+                {sending ? "Mengaktifkan..." : "▶ Aktifkan Survei"}
               </button>
             );
           })()}
@@ -1099,7 +1099,7 @@ export default function SurveyDetailPage() {
               </div>
               <div className="mt-4 flex gap-2 justify-end">
                 <div className="text-xs text-gray-400 flex-1 pt-1">
-                  {isDraft ? "⚠ Survey masih Draft — akan diaktifkan otomatis saat kirim email" : "* Kirim email akan dikonfigurasi terpisah"}
+                  {isDraft ? "⚠ Survey masih Draft — aktifkan dulu sebelum kirim email" : "* Kirim email akan dikonfigurasi terpisah"}
                 </div>
                 <button
                   onClick={() => setEmailPreviewRecipient(null)}
@@ -1142,7 +1142,7 @@ export default function SurveyDetailPage() {
                   disabled={sending}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition"
                 >
-                  {sending ? "Mengirim..." : isDraft ? "Aktifkan & Kirim Email" : "Kirim Email"}
+                  {isDraft ? "Aktifkan & Kirim Email" : "Kirim Email"}
                 </button>
               </div>
             </div>
