@@ -107,6 +107,10 @@ export async function POST(
 </html>`,
       });
       console.log(`[send-email] Resend result for ${recipient.email}:`, JSON.stringify(result));
+      // Mark recipient as email sent
+      await db.update(surveyRecipients)
+        .set({ sentAt: new Date() })
+        .where(eq(surveyRecipients.id, recipient.id));
       results.push({ id: recipient.id, name: recipient.name, email: recipient.email, success: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";

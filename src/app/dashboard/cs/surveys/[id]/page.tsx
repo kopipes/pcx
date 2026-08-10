@@ -22,6 +22,7 @@ interface Recipient {
   company: string | null;
   token: string;
   status: "PENDING" | "COMPLETED" | "EXPIRED";
+  sentAt: string | null;
   submittedAt: string | null;
   createdAt: string;
 }
@@ -385,6 +386,7 @@ export default function SurveyDetailPage() {
     setSending(false);
     if (res.ok && data.successCount > 0) {
       alert(`Email berhasil dikirim ke ${data.successCount} penerima.${data.failCount > 0 ? ` ${data.failCount} gagal.` : ""}`);
+      await loadSurvey();
     } else {
       alert(`Gagal kirim email: ${data.error || "Unknown error"}`);
     }
@@ -796,6 +798,11 @@ export default function SurveyDetailPage() {
                       }`}>
                         {r.status === "COMPLETED" ? "Sudah Isi" : r.status === "EXPIRED" ? "Expired" : "Belum Isi"}
                       </span>
+                      {r.sentAt && r.status !== "COMPLETED" && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                          ✉ Terkirim
+                        </span>
+                      )}
                       {r.status !== "COMPLETED" && r.email && (
                         <button
                           onClick={() => setEmailPreviewRecipient(r)}
