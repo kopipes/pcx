@@ -75,7 +75,12 @@ const statusColor: Record<string, string> = {
 const statusLabel: Record<string, string> = {
   DRAFT: "Draft", SENT: "Aktif", COMPLETED: "Selesai", EXPIRED: "Kadaluarsa",
 };
-const followUpColor: Record<string, string> = {
+const followUpLabel: Record<string, string> = {
+  NONE: "OK",
+  NEEDS_FOLLOWUP: "Needs Follow-up",
+  IN_PROGRESS: "In Progress",
+  RESOLVED: "Resolved",
+};
   NONE: "bg-gray-100 text-gray-600",
   NEEDS_FOLLOWUP: "bg-red-100 text-red-700",
   IN_PROGRESS: "bg-yellow-100 text-yellow-800",
@@ -908,7 +913,7 @@ export default function SurveyDetailPage() {
                       </div>
                     )}
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
-                      {r.followUpStatus.replace("_", " ")}
+                      {followUpLabel[r.followUpStatus] || r.followUpStatus.replace("_", " ")}
                     </span>
                     <span className={`text-gray-400 text-sm transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}>›</span>
                   </div>

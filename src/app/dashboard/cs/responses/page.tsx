@@ -32,6 +32,13 @@ const followUpColor: Record<string, string> = {
   RESOLVED: "bg-green-100 text-green-700",
 };
 
+const followUpLabel: Record<string, string> = {
+  NONE: "OK",
+  NEEDS_FOLLOWUP: "Needs Follow-up",
+  IN_PROGRESS: "In Progress",
+  RESOLVED: "Resolved",
+};
+
 function ScoreBar({ value, max = 5 }: { value: number; max?: number }) {
   const pct = (value / max) * 100;
   const color = value <= 2 ? "bg-red-500" : value <= 3 ? "bg-yellow-400" : "bg-green-500";
@@ -121,8 +128,8 @@ function ResponseCard({ r, expandedId, setExpandedId }: {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
-            {r.followUpStatus.replace("_", " ")}
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
+                {followUpLabel[r.followUpStatus] || r.followUpStatus.replace("_", " ")}
           </span>
           {r.answers && (
             <button
