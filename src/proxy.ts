@@ -5,6 +5,7 @@ export function proxy(request: NextRequest) {
   const { nextUrl } = request;
   const isPublic =
     nextUrl.pathname.startsWith("/survey/") ||
+    nextUrl.pathname.startsWith("/api/surveys/token/") ||
     nextUrl.pathname === "/login" ||
     nextUrl.pathname.startsWith("/api/auth");
 
