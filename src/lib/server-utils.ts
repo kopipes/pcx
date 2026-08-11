@@ -1,13 +1,16 @@
 // Server-only utilities — do NOT import this in client components
-import { nanoid } from "nanoid";
+import { nanoid, customAlphabet } from "nanoid";
 import { createHash } from "crypto";
 
 export function generateId(): string {
   return nanoid();
 }
 
+// Alphanumeric only — no hyphens or underscores that break URLs in emails
+const alphanumeric = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 32);
+
 export function generateToken(): string {
-  return nanoid(32);
+  return alphanumeric();
 }
 
 export function hashToken(token: string): string {
