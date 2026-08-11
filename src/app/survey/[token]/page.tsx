@@ -152,9 +152,9 @@ export default function SurveyPage() {
             questions.map((q, i) => (
               <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="mb-4">
-                  <span className="text-xs text-gray-400 font-medium">Pertanyaan {i + 1}</span>
-                  {q.required && <span className="text-red-400 ml-1 text-xs">*</span>}
-                  <h3 className="font-semibold text-gray-900 mt-1">{q.label}</h3>
+                  <span className="text-xs text-gray-500 font-medium">Pertanyaan {i + 1}</span>
+                  {q.required && <span className="text-red-500 ml-1 text-xs">*</span>}
+                  <h3 className="font-semibold text-gray-900 mt-1 text-base">{q.label}</h3>
                 </div>
 
                 {/* Rating 1–5 — smaller circles */}
@@ -166,7 +166,7 @@ export default function SurveyPage() {
                           className={`w-10 h-10 rounded-full text-sm font-semibold border-2 transition flex items-center justify-center ${
                             answers[String(i)] === String(s)
                               ? "bg-indigo-600 border-indigo-600 text-white"
-                              : "border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600"
+                              : "border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600"
                           }`}
                           aria-label={`Skor ${s}`}
                         >
@@ -174,7 +174,7 @@ export default function SurveyPage() {
                         </button>
                       ))}
                     </div>
-                    <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
+                    <div className="flex justify-between text-xs text-gray-500 mt-2 px-1">
                       <span>Sangat Buruk</span><span>Sangat Baik</span>
                     </div>
                   </div>
@@ -187,10 +187,10 @@ export default function SurveyPage() {
                       {[0,1,2,3,4,5,6,7,8,9,10].map((n) => {
                         const selected = answers[String(i)] === String(n);
                         const color = n <= 6 ? "hover:border-red-300" : n <= 8 ? "hover:border-yellow-300" : "hover:border-green-300";
-                        const selColor = n <= 6 ? "bg-red-500 border-red-500 text-white" : n <= 8 ? "bg-yellow-400 border-yellow-400 text-white" : "bg-green-500 border-green-500 text-white";
+                        const selColor = n <= 6 ? "bg-red-500 border-red-500 text-white" : n <= 8 ? "bg-yellow-500 border-yellow-500 text-white" : "bg-green-500 border-green-500 text-white";
                         return (
                           <button key={n} type="button" onClick={() => setAnswer(i, String(n))}
-                            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border-2 transition ${selected ? selColor : `border-gray-200 text-gray-600 ${color}`}`}
+                            className={`flex-1 py-2.5 rounded-lg text-sm font-semibold border-2 transition ${selected ? selColor : `border-gray-200 text-gray-700 ${color}`}`}
                             aria-label={`NPS ${n}`}
                           >
                             {n}
@@ -198,7 +198,7 @@ export default function SurveyPage() {
                         );
                       })}
                     </div>
-                    <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
+                    <div className="flex justify-between text-xs text-gray-500 mt-2 px-1">
                       <span>Tidak mungkin</span><span>Sangat mungkin</span>
                     </div>
                   </div>
@@ -248,7 +248,7 @@ export default function SurveyPage() {
                 {/* Multiselect — multiple choices */}
                 {q.type === "multiselect" && q.options && (
                   <div className="space-y-2">
-                    <p className="text-xs text-gray-400 mb-1">Pilih satu atau lebih jawaban</p>
+                    <p className="text-xs text-gray-500 mb-1">Pilih satu atau lebih jawaban</p>
                     {q.options.split(",").map((opt) => opt.trim()).filter(Boolean).map((opt) => {
                       const selected = (answers[String(i)] || "").split("||").map(s => s.trim()).filter(Boolean).includes(opt);
                       return (
