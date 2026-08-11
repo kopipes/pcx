@@ -125,19 +125,19 @@ export default function SurveyPage() {
                   <label className="block text-sm text-gray-600 mb-1">Nama <span className="text-red-500">*</span></label>
                   <input required value={respondentName} onChange={(e) => setRespondentName(e.target.value)}
                     placeholder="Nama Anda"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-400 outline-none" />
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-indigo-400 outline-none" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">Email <span className="text-red-500">*</span></label>
                   <input type="email" required value={respondentEmail} onChange={(e) => setRespondentEmail(e.target.value)}
                     placeholder="email@perusahaan.com"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-400 outline-none" />
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-indigo-400 outline-none" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-600 mb-1">Perusahaan</label>
                   <input value={respondentCompany} onChange={(e) => setRespondentCompany(e.target.value)}
                     placeholder="Nama perusahaan Anda"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-indigo-400 outline-none" />
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-indigo-400 outline-none" />
                 </div>
               </div>
             </div>
@@ -208,7 +208,7 @@ export default function SurveyPage() {
                 {q.type === "text" && (
                   <textarea value={answers[String(i)] || ""} onChange={(e) => setAnswer(i, e.target.value)}
                     rows={3} placeholder="Tuliskan jawaban Anda..."
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none resize-none" />
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-indigo-400 outline-none resize-none" />
                 )}
 
                 {/* Select — single choice */}
