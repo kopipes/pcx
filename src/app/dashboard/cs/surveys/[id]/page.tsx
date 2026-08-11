@@ -190,6 +190,7 @@ export default function SurveyDetailPage() {
   const [deletingRecipient, setDeletingRecipient] = useState<string | null>(null);
   // Preview modal
   const [showPreview, setShowPreview] = useState(false);
+  const [expandedResponses, setExpandedResponses] = useState<Set<string>>(new Set());
   // Email template modal
   const [emailPreviewRecipient, setEmailPreviewRecipient] = useState<Recipient | null>(null);
 
@@ -868,11 +869,19 @@ export default function SurveyDetailPage() {
             const npsVal = questions.findIndex(q => q.type === "nps");
             const npsScore = npsVal >= 0 ? Number(answers[String(npsVal)]) : r.nps;
             const isRisk = (avgScore !== null && avgScore <= 2) || (npsScore !== null && npsScore <= 6);
+            const isExpanded = expandedResponses.has(r.id);
 
             return (
-              <div key={r.id} className={`bg-white rounded-xl border p-5 ${isRisk ? "border-red-200" : "border-gray-200"}`}>
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
+              <div key={r.id} className={`bg-white rounded-xl border ${isRisk ? "border-red-200" : "border-gray-200"}`}>
+                {/* Collapsible Header */}
+                <button
+                  onClick={() => setExpandedResponses(prev => {
+                    const next = new Set(prev);
+                    next.has(r.id) ? next.delete(r.id) : next.add(r.id);
+                    return next;
+                  })}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 rounded-xl transition"
+                >
                   <div>
                     <div className="flex items-center gap-2">
                       {isRisk && <span className="text-red-500 text-sm">⚠</span>}
@@ -901,12 +910,13 @@ export default function SurveyDetailPage() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${followUpColor[r.followUpStatus]}`}>
                       {r.followUpStatus.replace("_", " ")}
                     </span>
+                    <span className={`text-gray-400 text-sm transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}>›</span>
                   </div>
-                </div>
+                </button>
 
-                {/* Per-question answers */}
-                {Object.keys(answers).length > 0 ? (
-                  <div className="space-y-3 border-t border-gray-100 pt-4">
+                {/* Per-question answers — collapsible */}
+                {isExpanded && (Object.keys(answers).length > 0 ? (
+                  <div className="space-y-3 border-t border-gray-100 px-5 pb-5 pt-4">
                     {questions.map((q, i) => {
                       const val = answers[String(i)];
                       if (!val) return null;
@@ -988,12 +998,12 @@ export default function SurveyDetailPage() {
                     })}
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-500 space-y-1 border-t border-gray-100 pt-3">
+                  <div className="text-sm text-gray-500 space-y-1 border-t border-gray-100 px-5 pb-5 pt-3">
                     {r.scoreOverall !== null && <div>Skor Overall: <strong>{r.scoreOverall}/5</strong></div>}
                     {r.nps !== null && <div>NPS: <strong>{r.nps}</strong></div>}
                     {r.comments && <div className="bg-gray-50 rounded-lg px-3 py-2 italic text-gray-600">"{r.comments}"</div>}
                   </div>
-                )}
+                ))}
               </div>
             );
           })}
