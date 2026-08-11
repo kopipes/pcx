@@ -81,6 +81,7 @@ const followUpLabel: Record<string, string> = {
   IN_PROGRESS: "In Progress",
   RESOLVED: "Resolved",
 };
+const followUpColor: Record<string, string> = {
   NONE: "bg-gray-100 text-gray-600",
   NEEDS_FOLLOWUP: "bg-red-100 text-red-700",
   IN_PROGRESS: "bg-yellow-100 text-yellow-800",
