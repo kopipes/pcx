@@ -188,8 +188,9 @@ export default function SurveyPage() {
                           {s}
                         </button>
                         {s === 1 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Buruk</span>}
+                        {s === 3 && <span className="text-xs text-gray-400 whitespace-nowrap">Cukup</span>}
                         {s === 5 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Baik</span>}
-                        {s !== 1 && s !== 5 && <span className="text-xs text-transparent select-none">.</span>}
+                        {(s === 2 || s === 4) && <span className="text-xs text-transparent select-none">.</span>}
                       </div>
                     ))}
                   </div>

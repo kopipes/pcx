@@ -1100,8 +1100,9 @@ export default function SurveyDetailPage() {
                           <div key={s} className="flex flex-col items-center gap-1">
                             <div className="w-10 h-10 rounded-full border-2 border-gray-200 flex items-center justify-center text-sm text-gray-400 font-semibold">{s}</div>
                             {s === 1 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Buruk</span>}
+                            {s === 3 && <span className="text-xs text-gray-400 whitespace-nowrap">Cukup</span>}
                             {s === 5 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Baik</span>}
-                            {s !== 1 && s !== 5 && <span className="text-xs text-transparent select-none">.</span>}
+                            {(s === 2 || s === 4) && <span className="text-xs text-transparent select-none">.</span>}
                           </div>
                         ))}
                       </div>
