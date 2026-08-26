@@ -8,7 +8,7 @@ import { formatDate, formatDateTime, getSlaStatus } from "@/lib/utils";
 
 interface Question {
   id?: string;
-  type: "rating" | "nps" | "text" | "select" | "multiselect";
+  type: "rating" | "nps" | "text" | "select" | "multiselect" | "header";
   label: string;
   required: boolean;
   options?: string;
@@ -88,7 +88,7 @@ const followUpColor: Record<string, string> = {
   RESOLVED: "bg-green-100 text-green-700",
 };
 const typeLabel: Record<string, string> = {
-  rating: "Rating 1–5", nps: "NPS 0–10", text: "Teks Bebas", select: "Pilihan Ganda", multiselect: "Pilihan Berganda",
+  rating: "Rating 1–5", nps: "NPS 0–10", text: "Teks Bebas", select: "Pilihan Ganda", multiselect: "Pilihan Berganda", header: "Header / Judul Seksi",
 };
 
 function QuestionRow({
@@ -100,6 +100,34 @@ function QuestionRow({
   onRemove: (i: number) => void;
   onMove: (i: number, dir: -1 | 1) => void;
 }) {
+  if (q.type === "header") {
+    return (
+      <div className="bg-indigo-50 rounded-lg border border-indigo-200 p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-indigo-400 font-medium">H</span>
+          <select
+            value={q.type}
+            onChange={(e) => onChange(index, { ...q, type: e.target.value as Question["type"] })}
+            className="px-2 py-1.5 border border-indigo-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-400 outline-none bg-white"
+          >
+            {Object.entries(typeLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <div className="flex gap-1 ml-auto">
+            <button onClick={() => onMove(index, -1)} disabled={index === 0} className="px-1.5 py-1 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↑</button>
+            <button onClick={() => onMove(index, 1)} disabled={index === total - 1} className="px-1.5 py-1 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30">↓</button>
+            <button onClick={() => onRemove(index)} className="px-1.5 py-1 text-xs text-red-400 hover:text-red-600">✕</button>
+          </div>
+        </div>
+        <input
+          value={q.label}
+          onChange={(e) => onChange(index, { ...q, label: e.target.value })}
+          placeholder="Judul seksi / header..."
+          className="w-full px-3 py-1.5 border border-indigo-300 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-indigo-400 outline-none"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 space-y-2">
       <div className="flex items-center gap-2">
@@ -252,7 +280,7 @@ export default function SurveyDetailPage() {
   async function saveQuestions() {
     if (!questions.length) { setSendError("Tambahkan minimal 1 pertanyaan."); return; }
     const invalid = questions.find(q => !q.label.trim());
-    if (invalid) { setSendError("Semua pertanyaan harus memiliki teks."); return; }
+    if (invalid) { setSendError("Semua pertanyaan dan header harus memiliki teks."); return; }
     setSaving(true);
     setSendError("");
     await fetch(`/api/surveys/${id}/questions`, {
@@ -266,8 +294,10 @@ export default function SurveyDetailPage() {
 
   async function handleSend() {
     if (!questions.length) { setSendError("Tambahkan minimal 1 pertanyaan sebelum mengirim."); return; }
+    const hasRealQuestion = questions.some(q => q.type !== "header");
+    if (!hasRealQuestion) { setSendError("Tambahkan minimal 1 pertanyaan (bukan hanya header)."); return; }
     const invalid = questions.find(q => !q.label.trim());
-    if (invalid) { setSendError("Semua pertanyaan harus memiliki teks."); return; }
+    if (invalid) { setSendError("Semua pertanyaan dan header harus memiliki teks."); return; }
     if (questionsDirty) await saveQuestions();
     if (!confirm("Kirim survei ini? Setelah dikirim, link akan aktif dan tidak bisa diedit lagi.")) return;
     setSending(true);
@@ -1048,45 +1078,56 @@ export default function SurveyDetailPage() {
                 </div>
               </div>
               {/* Questions */}
-              {questions.map((q, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6">
-                  <div className="mb-4">
-                    <span className="text-xs text-gray-400">Pertanyaan {i + 1}</span>
-                    {q.required && <span className="text-red-400 ml-1 text-xs">*</span>}
-                    <h3 className="font-semibold text-gray-900 mt-1">{q.label || <span className="text-gray-300 italic">Teks pertanyaan...</span>}</h3>
+              {(() => {
+                let qNum = 0;
+                return questions.map((q, i) => (
+                  q.type === "header" ? (
+                    <div key={i} className="pt-2">
+                      <div className="border-b-2 border-indigo-200 pb-2 mb-1">
+                        <h2 className="text-base font-bold text-indigo-700">{q.label || <span className="text-gray-300 italic">Judul seksi...</span>}</h2>
+                      </div>
+                    </div>
+                  ) : (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6">
+                    <div className="mb-4">
+                      <span className="text-xs text-gray-400">Pertanyaan {++qNum}</span>
+                      {q.required && <span className="text-red-400 ml-1 text-xs">*</span>}
+                      <h3 className="font-semibold text-gray-900 mt-1">{q.label || <span className="text-gray-300 italic">Teks pertanyaan...</span>}</h3>
+                    </div>
+                    {q.type === "rating" && (
+                      <div>
+                        <div className="flex gap-2">
+                          {[1,2,3,4,5].map(s => (
+                            <div key={s} className="w-10 h-10 rounded-full border-2 border-gray-200 flex items-center justify-center text-sm text-gray-400 font-semibold">{s}</div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-400 mt-2 px-1"><span>Sangat Buruk</span><span>Sangat Baik</span></div>
+                      </div>
+                    )}
+                    {q.type === "nps" && (
+                      <div>
+                        <div className="flex gap-1.5">
+                          {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
+                            <div key={n} className={`flex-1 py-2 rounded-lg border-2 text-xs font-semibold text-center ${n <= 6 ? "border-red-100 text-red-300" : n <= 8 ? "border-yellow-100 text-yellow-400" : "border-green-100 text-green-400"}`}>{n}</div>
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-400 mt-2 px-1"><span>Tidak mungkin</span><span>Sangat mungkin</span></div>
+                      </div>
+                    )}
+                    {q.type === "text" && (
+                      <textarea disabled rows={3} placeholder="Tuliskan jawaban Anda..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400 resize-none" />
+                    )}
+                    {(q.type === "select" || q.type === "multiselect") && q.options && (
+                      <div className="space-y-2">
+                        {q.options.split(",").map(opt => opt.trim()).filter(Boolean).map(opt => (
+                          <div key={opt} className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-gray-100 text-sm text-gray-500">{opt}</div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {q.type === "rating" && (
-                    <div>
-                      <div className="flex gap-2">
-                        {[1,2,3,4,5].map(s => (
-                          <div key={s} className="w-10 h-10 rounded-full border-2 border-gray-200 flex items-center justify-center text-sm text-gray-400 font-semibold">{s}</div>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-400 mt-2 px-1"><span>Sangat Buruk</span><span>Sangat Baik</span></div>
-                    </div>
-                  )}
-                  {q.type === "nps" && (
-                    <div>
-                      <div className="flex gap-1.5">
-                        {[0,1,2,3,4,5,6,7,8,9,10].map(n => (
-                          <div key={n} className={`flex-1 py-2 rounded-lg border-2 text-xs font-semibold text-center ${n <= 6 ? "border-red-100 text-red-300" : n <= 8 ? "border-yellow-100 text-yellow-400" : "border-green-100 text-green-400"}`}>{n}</div>
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-400 mt-2 px-1"><span>Tidak mungkin</span><span>Sangat mungkin</span></div>
-                    </div>
-                  )}
-                  {q.type === "text" && (
-                    <textarea disabled rows={3} placeholder="Tuliskan jawaban Anda..." className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 text-gray-400 resize-none" />
-                  )}
-                  {(q.type === "select" || q.type === "multiselect") && q.options && (
-                    <div className="space-y-2">
-                      {q.options.split(",").map(opt => opt.trim()).filter(Boolean).map(opt => (
-                        <div key={opt} className="flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 border-gray-100 text-sm text-gray-500">{opt}</div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+                  )
+                ));
+              })()}
               <button disabled className="w-full bg-indigo-200 text-white font-semibold py-4 rounded-2xl text-base cursor-not-allowed">
                 Kirim Penilaian
               </button>

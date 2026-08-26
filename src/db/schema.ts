@@ -15,7 +15,7 @@ export const surveyQuestions = sqliteTable("survey_questions", {
   surveyId: text("survey_id").references(() => surveys.id),
   templateId: text("template_id").references(() => surveyTemplates.id),
   sortOrder: integer("sort_order").notNull().default(0),
-  type: text("type", { enum: ["rating", "nps", "text", "select", "multiselect"] }).notNull(),
+  type: text("type", { enum: ["rating", "nps", "text", "select", "multiselect", "header"] }).notNull(),
   label: text("label").notNull(),
   required: integer("required", { mode: "boolean" }).notNull().default(true),
   options: text("options"), // JSON array for select type

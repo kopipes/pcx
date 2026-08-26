@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 interface Question {
   id: string;
-  type: "rating" | "nps" | "text" | "select" | "multiselect";
+  type: "rating" | "nps" | "text" | "select" | "multiselect" | "header";
   label: string;
   required: boolean;
   options?: string | null;
@@ -53,12 +53,15 @@ export default function SurveyPage() {
     e.preventDefault();
     setError("");
 
-    // Validate required questions
+    // Validate required questions (skip headers)
+    let qIndex = 0;
     for (let i = 0; i < questions.length; i++) {
+      if (questions[i].type === "header") continue;
       if (questions[i].required && !answers[String(i)]) {
-        setError(`Pertanyaan ${i + 1} wajib diisi.`);
+        setError(`Pertanyaan ${++qIndex} wajib diisi.`);
         return;
       }
+      qIndex++;
     }
 
     setSubmitting(true);
@@ -148,11 +151,23 @@ export default function SurveyPage() {
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center text-gray-400 text-sm">
               Survei ini belum memiliki pertanyaan.
             </div>
-          ) : (
-            questions.map((q, i) => (
+          ) : (() => {
+              let qNum = 0;
+              return questions.map((q, i) => {
+                if (q.type === "header") {
+                  return (
+                    <div key={q.id} className="pt-2">
+                      <div className="border-b-2 border-indigo-300 pb-2">
+                        <h2 className="text-base font-bold text-indigo-700">{q.label}</h2>
+                      </div>
+                    </div>
+                  );
+                }
+                const qN = ++qNum;
+                return (
               <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                 <div className="mb-4">
-                  <span className="text-xs text-gray-500 font-medium">Pertanyaan {i + 1}</span>
+                   <span className="text-xs text-gray-500 font-medium">Pertanyaan {qN}</span>
                   {q.required && <span className="text-red-500 ml-1 text-xs">*</span>}
                   <h3 className="font-semibold text-gray-900 mt-1 text-base">{q.label}</h3>
                 </div>
@@ -307,8 +322,9 @@ export default function SurveyPage() {
                   </div>
                 )}
               </div>
-            ))
-          )}
+                );
+              });
+            })()}
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">{error}</div>
