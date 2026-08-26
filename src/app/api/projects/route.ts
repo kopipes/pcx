@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       clientCompany,
       projectName,
       businessUnitId,
-      projectManagerId,
+      projectManagerId: projectManagerId || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     })
