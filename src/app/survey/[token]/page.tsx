@@ -174,10 +174,10 @@ export default function SurveyPage() {
 
                 {/* Rating 1–5 — smaller circles */}
                 {q.type === "rating" && (
-                  <div>
-                    <div className="flex gap-2">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <button key={s} type="button" onClick={() => setAnswer(i, String(s))}
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <div key={s} className="flex flex-col items-center gap-1">
+                        <button type="button" onClick={() => setAnswer(i, String(s))}
                           className={`w-10 h-10 rounded-full text-sm font-semibold border-2 transition flex items-center justify-center ${
                             answers[String(i)] === String(s)
                               ? "bg-indigo-600 border-indigo-600 text-white"
@@ -187,11 +187,11 @@ export default function SurveyPage() {
                         >
                           {s}
                         </button>
-                      ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-gray-500 mt-2 px-1">
-                      <span>Sangat Buruk</span><span>Sangat Baik</span>
-                    </div>
+                        {s === 1 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Buruk</span>}
+                        {s === 5 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Baik</span>}
+                        {s !== 1 && s !== 5 && <span className="text-xs text-transparent select-none">.</span>}
+                      </div>
+                    ))}
                   </div>
                 )}
 

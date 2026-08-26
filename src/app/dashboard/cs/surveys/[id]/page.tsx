@@ -1095,13 +1095,15 @@ export default function SurveyDetailPage() {
                       <h3 className="font-semibold text-gray-900 mt-1">{q.label || <span className="text-gray-300 italic">Teks pertanyaan...</span>}</h3>
                     </div>
                     {q.type === "rating" && (
-                      <div>
-                        <div className="flex gap-2">
-                          {[1,2,3,4,5].map(s => (
-                            <div key={s} className="w-10 h-10 rounded-full border-2 border-gray-200 flex items-center justify-center text-sm text-gray-400 font-semibold">{s}</div>
-                          ))}
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-400 mt-2 px-1"><span>Sangat Buruk</span><span>Sangat Baik</span></div>
+                      <div className="flex gap-2">
+                        {[1,2,3,4,5].map(s => (
+                          <div key={s} className="flex flex-col items-center gap-1">
+                            <div className="w-10 h-10 rounded-full border-2 border-gray-200 flex items-center justify-center text-sm text-gray-400 font-semibold">{s}</div>
+                            {s === 1 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Buruk</span>}
+                            {s === 5 && <span className="text-xs text-gray-400 whitespace-nowrap">Sangat Baik</span>}
+                            {s !== 1 && s !== 5 && <span className="text-xs text-transparent select-none">.</span>}
+                          </div>
+                        ))}
                       </div>
                     )}
                     {q.type === "nps" && (
