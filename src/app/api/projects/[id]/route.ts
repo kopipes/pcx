@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const roles = session.user.roles || [session.user.role];
-  if (!roles.some(r => ["CS","ADMIN"].includes(r))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!roles.some(r => ["CS","ADMIN","BU_HEAD"].includes(r))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();
