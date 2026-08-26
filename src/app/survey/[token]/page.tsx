@@ -331,30 +331,33 @@ export default function SurveyPage() {
           )}
 
           {/* Cara Mengisi */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-            <div className="text-sm font-semibold text-gray-700 mb-3">Panduan Pengisian</div>
-            <div className="space-y-2 text-xs text-gray-500">
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">1</span>
-                <span><strong className="text-gray-700">Rating (1–5)</strong> — Pilih angka yang mewakili penilaian Anda. 1 = Sangat Buruk, 5 = Sangat Baik.</span>
+          {(() => {
+            const types = new Set(questions.filter(q => q.type !== "header").map(q => q.type));
+            const guides: { type: string; title: string; desc: string }[] = [
+              { type: "rating", title: "Rating (1–5)", desc: "Pilih angka yang mewakili penilaian Anda. 1 = Sangat Buruk, 5 = Sangat Baik." },
+              { type: "nps", title: "NPS (0–10)", desc: "Seberapa besar kemungkinan Anda merekomendasikan kami. 0–6 = Tidak merekomendasikan, 7–8 = Netral, 9–10 = Sangat merekomendasikan." },
+              { type: "text", title: "Teks Bebas", desc: "Tuliskan masukan, saran, atau komentar Anda secara langsung." },
+              { type: "select", title: "Pilihan Ganda", desc: "Pilih salah satu opsi yang paling sesuai dengan kondisi Anda." },
+              { type: "multiselect", title: "Pilihan Berganda", desc: "Pilih satu atau lebih opsi yang sesuai dengan kondisi Anda." },
+            ].filter(g => types.has(g.type as Question["type"]));
+            if (!guides.length) return null;
+            return (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <div className="text-sm font-semibold text-gray-700 mb-3">Panduan Pengisian</div>
+                <div className="space-y-2 text-xs text-gray-500">
+                  {guides.map((g, idx) => (
+                    <div key={g.type} className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">{idx + 1}</span>
+                      <span><strong className="text-gray-700">{g.title}</strong> — {g.desc}</span>
+                    </div>
+                  ))}
+                  <div className="pt-1 border-t border-gray-100 text-gray-400">
+                    Pertanyaan bertanda <span className="text-red-400 font-bold">*</span> wajib diisi sebelum mengirim.
+                  </div>
+                </div>
               </div>
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">2</span>
-                <span><strong className="text-gray-700">NPS (0–10)</strong> — Seberapa besar kemungkinan Anda merekomendasikan kami. 0–6 = Tidak merekomendasikan, 7–8 = Netral, 9–10 = Sangat merekomendasikan.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">3</span>
-                <span><strong className="text-gray-700">Teks Bebas</strong> — Tuliskan masukan, saran, atau komentar Anda secara langsung.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold flex-shrink-0 mt-0.5">4</span>
-                <span><strong className="text-gray-700">Pilihan Ganda</strong> — Pilih salah satu opsi yang paling sesuai dengan kondisi Anda.</span>
-              </div>
-              <div className="pt-1 border-t border-gray-100 text-gray-400">
-                Pertanyaan bertanda <span className="text-red-400 font-bold">*</span> wajib diisi sebelum mengirim.
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           <button type="submit" disabled={submitting || questions.length === 0}
             className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold py-4 rounded-2xl text-base transition shadow-lg">
