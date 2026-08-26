@@ -187,9 +187,9 @@ export default function SurveyPage() {
                         >
                           {s}
                         </button>
-                        {s === 1 && <span className="text-xs text-gray-400 whitespace-nowrap">Tidak</span>}
+                        {s === 1 && <span className="text-xs text-gray-400 whitespace-nowrap">{q.options === "scale:yesno" ? "Tidak" : "Sangat Buruk"}</span>}
                         {s === 3 && <span className="text-xs text-gray-400 whitespace-nowrap">Netral</span>}
-                        {s === 5 && <span className="text-xs text-gray-400 whitespace-nowrap">Ya</span>}
+                        {s === 5 && <span className="text-xs text-gray-400 whitespace-nowrap">{q.options === "scale:yesno" ? "Ya" : "Sangat Baik"}</span>}
                         {(s === 2 || s === 4) && <span className="text-xs text-transparent select-none">.</span>}
                       </div>
                     ))}
