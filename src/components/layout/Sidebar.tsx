@@ -25,6 +25,7 @@ const navByRole: Record<string, NavSection[]> = {
   BU_HEAD: [
     { section: "Analitik", icon: "📊", items: [
       { label: "Analitik BU", href: "/dashboard/bu" },
+      { label: "Ringkasan Survei", href: "/dashboard/analytics/survey-summary" },
     ]},
     { section: "Proyek", icon: "📁", items: [
       { label: "Proyek BU", href: "/dashboard/bu/projects" },
@@ -36,6 +37,7 @@ const navByRole: Record<string, NavSection[]> = {
   DIRECTOR: [
     { section: "Analitik", icon: "📊", items: [
       { label: "Ringkasan Eksekutif", href: "/dashboard/director" },
+      { label: "Ringkasan Survei", href: "/dashboard/analytics/survey-summary" },
     ]},
   ],
   ADMIN: [
@@ -58,6 +60,7 @@ const navByRole: Record<string, NavSection[]> = {
       { label: "Analitik BU", href: "/dashboard/bu" },
       { label: "Follow-up BU", href: "/dashboard/bu/followups" },
       { label: "Ringkasan Eksekutif", href: "/dashboard/director" },
+      { label: "Ringkasan Survei", href: "/dashboard/analytics/survey-summary" },
     ]},
   ],
 };
