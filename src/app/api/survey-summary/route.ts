@@ -106,10 +106,18 @@ export async function GET() {
           const opts = q.options ? q.options.split(",").map(o => o.trim()).filter(Boolean) : [];
           const dist: Record<string, number> = {};
           for (const opt of opts) dist[opt] = 0;
+          let lainnyaCount = 0;
           for (const v of answered) {
-            if (dist[v] !== undefined) dist[v]++;
-            else dist[v] = (dist[v] || 0) + 1;
+            if (v === "__lainnya__") {
+              lainnyaCount++;
+            } else if (opts.includes(v)) {
+              dist[v]++;
+            } else {
+              // custom text from "Lainnya" field
+              lainnyaCount++;
+            }
           }
+          if (lainnyaCount > 0) dist["Lainnya"] = lainnyaCount;
           const total = answered.length;
           const distribution = Object.entries(dist).map(([opt, count]) => ({
             opt,
