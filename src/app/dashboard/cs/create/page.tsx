@@ -40,6 +40,7 @@ export default function CreateSurveyPage() {
   const [projectId, setProjectId] = useState("");
   const [expiresInDays, setExpiresInDays] = useState(7);
   const [notes, setNotes] = useState("");
+  const [allowMultiple, setAllowMultiple] = useState(true);
   const [loading, setLoading] = useState(false);
   const [surveysLoading, setSurveysLoading] = useState(true);
   const [pendingQuestions, setPendingQuestions] = useState<{ type: string; label: string; required: boolean; options?: string }[]>([]);
@@ -68,7 +69,7 @@ export default function CreateSurveyPage() {
     const res = await fetch("/api/surveys", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId, expiresInDays, notes, asDraft: true }),
+      body: JSON.stringify({ projectId, expiresInDays, notes, asDraft: true, allowMultiple }),
     });
     let data: { error?: string; id?: string; token?: string } = {};
     try { data = await res.json(); } catch { /* empty body */ }
@@ -162,6 +163,19 @@ export default function CreateSurveyPage() {
                 placeholder="Mis: survei untuk project phase 2..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
               />
+            </div>
+            <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2.5">
+              <div>
+                <div className="text-sm font-medium text-gray-700">Izinkan banyak responden</div>
+                <div className="text-xs text-gray-400 mt-0.5">Jika dimatikan, survey otomatis selesai setelah 1 respons masuk</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAllowMultiple(v => !v)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${allowMultiple ? "bg-indigo-600" : "bg-gray-300"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${allowMultiple ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
             </div>
 
             {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{error}</div>}

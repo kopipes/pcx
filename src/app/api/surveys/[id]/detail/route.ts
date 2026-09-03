@@ -19,6 +19,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       status: surveys.status,
       notes: surveys.notes,
       mode: surveys.mode,
+      allowMultiple: surveys.allowMultiple,
       expiresAt: surveys.expiresAt,
       sentAt: surveys.sentAt,
       createdAt: surveys.createdAt,

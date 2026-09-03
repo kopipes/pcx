@@ -216,6 +216,7 @@ export default function SurveyDetailPage() {
   const [editing, setEditing] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [editDays, setEditDays] = useState(7);
+  const [editAllowMultiple, setEditAllowMultiple] = useState(true);
   const [templateName, setTemplateName] = useState("");
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
@@ -247,6 +248,7 @@ export default function SurveyDetailPage() {
     ]);
     setSurvey(sRes);
     setEditNotes(sRes.notes || "");
+    setEditAllowMultiple(sRes.allowMultiple !== false);
     setQuestions(Array.isArray(qRes) ? qRes : []);
     setTemplates(Array.isArray(tRes) ? tRes : []);
     setRecipients(Array.isArray(rRes) ? rRes : []);
@@ -326,7 +328,7 @@ export default function SurveyDetailPage() {
     await fetch(`/api/surveys/${id}/detail`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: editNotes, expiresInDays: editDays }),
+      body: JSON.stringify({ notes: editNotes, expiresInDays: editDays, allowMultiple: editAllowMultiple }),
     });
     await loadSurvey();
     setEditing(false);
@@ -515,6 +517,19 @@ export default function SurveyDetailPage() {
               <label className="block text-xs font-medium text-gray-600 mb-1">Perpanjang kadaluarsa (hari dari sekarang)</label>
               <input type="number" min={1} max={30} value={editDays} onChange={(e) => setEditDays(Number(e.target.value))}
                 className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none" />
+            </div>
+            <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2.5 border border-gray-200">
+              <div>
+                <div className="text-xs font-medium text-gray-700">Izinkan banyak responden</div>
+                <div className="text-xs text-gray-400 mt-0.5">Jika dimatikan, survey selesai setelah 1 respons masuk</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditAllowMultiple(v => !v)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${editAllowMultiple ? "bg-indigo-600" : "bg-gray-300"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${editAllowMultiple ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
             </div>
             <div className="flex gap-2">
               <button onClick={handleSaveEdit} disabled={saving} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-60 transition">
