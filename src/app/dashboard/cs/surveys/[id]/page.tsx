@@ -572,13 +572,21 @@ export default function SurveyDetailPage() {
             <>
               {(() => {
                 const pendingWithEmail = recipients.filter(r => r.email && r.status !== "COMPLETED");
+                const alreadySent = pendingWithEmail.filter(r => r.sentAt);
+                const notYetSent = pendingWithEmail.filter(r => !r.sentAt);
+                const allResent = alreadySent.length > 0 && notYetSent.length === 0;
+                const someResent = alreadySent.length > 0 && notYetSent.length > 0;
                 return pendingWithEmail.length > 0 ? (
                   <button
                     onClick={handleSendAllEmails}
                     disabled={sending}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition"
+                    className={`px-4 py-2 disabled:opacity-60 text-white rounded-lg text-sm font-medium transition ${allResent ? "bg-orange-500 hover:bg-orange-600" : "bg-indigo-600 hover:bg-indigo-700"}`}
                   >
-                    {sending ? "Mengirim..." : `✉ Kirim Email ke Semua (${pendingWithEmail.length})`}
+                    {sending ? "Mengirim..." : allResent
+                      ? `↩ Kirim Ulang ke Semua (${pendingWithEmail.length})`
+                      : someResent
+                        ? `✉ Kirim & Kirim Ulang (${pendingWithEmail.length})`
+                        : `✉ Kirim Email ke Semua (${pendingWithEmail.length})`}
                   </button>
                 ) : null;
               })()}
@@ -875,7 +883,12 @@ export default function SurveyDetailPage() {
                       </span>
                       {r.sentAt && r.status !== "COMPLETED" && (
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          ✉ Terkirim
+                          ✉ Terkirim {formatDate(new Date(r.sentAt).toISOString())}
+                        </span>
+                      )}
+                      {r.sentAt && r.status === "COMPLETED" && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                          ✉ {formatDate(new Date(r.sentAt).toISOString())}
                         </span>
                       )}
                       {r.status !== "COMPLETED" && r.email && (

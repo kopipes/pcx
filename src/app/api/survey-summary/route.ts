@@ -47,6 +47,9 @@ export async function GET() {
       id: responses.id,
       surveyId: responses.surveyId,
       answers: responses.answers,
+      respondentName: responses.respondentName,
+      respondentEmail: responses.respondentEmail,
+      submittedAt: responses.submittedAt,
     })
     .from(responses)
     .all();
@@ -72,20 +75,25 @@ export async function GET() {
         q.type === "rating" || q.type === "nps" || q.type === "select"
       );
 
-      const questionStats = scoredQuestions.map((q, _) => {
+      const questionStats = scoredQuestions.map((q) => {
         // Find index of this question among ALL questions (for answers key lookup)
         const qIdx = questions.findIndex(x => x.id === q.id);
 
-        const answered = surveyResponses
-          .map(r => {
-            try {
-              const parsed = r.answers ? JSON.parse(r.answers) : {};
-              return parsed[String(qIdx)];
-            } catch {
-              return undefined;
-            }
-          })
-          .filter(v => v !== undefined && v !== "" && v !== null);
+        // Per-respondent answers
+        const respondentAnswers = surveyResponses.map(r => {
+          try {
+            const parsed = r.answers ? JSON.parse(r.answers) : {};
+            const val = parsed[String(qIdx)];
+            return {
+              name: r.respondentName || r.respondentEmail || "Anonim",
+              value: val !== undefined && val !== "" && val !== null ? val : null,
+            };
+          } catch {
+            return { name: r.respondentName || r.respondentEmail || "Anonim", value: null };
+          }
+        }).filter(r => r.value !== null);
+
+        const answered = respondentAnswers.map(r => r.value as string);
 
         if (q.type === "rating" || q.type === "nps") {
           const nums = answered.map(v => parseFloat(v)).filter(n => !isNaN(n));
@@ -99,6 +107,7 @@ export async function GET() {
             options: q.options,
             responseCount: nums.length,
             avg,
+            respondentAnswers,
           };
         }
 
@@ -113,7 +122,6 @@ export async function GET() {
             } else if (opts.includes(v)) {
               dist[v]++;
             } else {
-              // custom text from "Lainnya" field
               lainnyaCount++;
             }
           }
@@ -131,6 +139,7 @@ export async function GET() {
             options: q.options,
             responseCount: total,
             distribution,
+            respondentAnswers,
           };
         }
 
@@ -152,3 +161,4 @@ export async function GET() {
   // Only return surveys that have at least 1 response
   return NextResponse.json(result.filter(s => s.totalResponses > 0));
 }
+

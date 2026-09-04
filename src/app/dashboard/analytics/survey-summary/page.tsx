@@ -10,6 +10,7 @@ interface QuestionStat {
   responseCount: number;
   avg?: number | null;
   distribution?: { opt: string; count: number; pct: number }[];
+  respondentAnswers?: { name: string; value: string }[];
 }
 
 interface SurveySummary {
@@ -170,6 +171,17 @@ export default function SurveySummaryPage() {
                                 <div className="mt-2">
                                   <RatingBar avg={q.avg} max={q.type === "rating" ? 5 : 10} />
                                   <div className="text-xs text-gray-400 mt-1">{q.responseCount} responden</div>
+                                  {q.respondentAnswers && q.respondentAnswers.length > 0 && (
+                                    <div className="mt-2 space-y-1 border-t border-gray-100 pt-2">
+                                      {q.respondentAnswers.map((ra, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-xs">
+                                          <span className="text-gray-500 font-medium truncate max-w-[160px]">{ra.name}</span>
+                                          <span className="text-gray-300">:</span>
+                                          <span className={`font-semibold ${parseFloat(ra.value) >= (q.type === "rating" ? 4 : 8) ? "text-green-600" : parseFloat(ra.value) >= (q.type === "rating" ? 2.5 : 5) ? "text-yellow-600" : "text-red-500"}`}>{ra.value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               ) : (q.type === "rating" || q.type === "nps") && (
                                 <div className="text-xs text-gray-400">Belum ada jawaban</div>
@@ -177,6 +189,17 @@ export default function SurveySummaryPage() {
                               {q.type === "select" && q.distribution ? (
                                 <div className="mt-2">
                                   <DistributionBar distribution={q.distribution} total={q.responseCount} />
+                                  {q.respondentAnswers && q.respondentAnswers.length > 0 && (
+                                    <div className="mt-2 space-y-1 border-t border-gray-100 pt-2">
+                                      {q.respondentAnswers.map((ra, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-xs">
+                                          <span className="text-gray-500 font-medium truncate max-w-[160px]">{ra.name}</span>
+                                          <span className="text-gray-300">:</span>
+                                          <span className="text-gray-700">{ra.value === "__lainnya__" ? "Lainnya" : ra.value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               ) : q.type === "select" && (
                                 <div className="text-xs text-gray-400">Belum ada jawaban</div>
