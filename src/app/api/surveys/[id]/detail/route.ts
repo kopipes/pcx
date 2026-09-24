@@ -75,6 +75,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       updateData.mode = recipientCount.length > 0 ? "PER_ORANG" : "UMUM";
       updateData.status = "SENT";
       updateData.sentAt = new Date();
+      // A draft activated after its original expiry would email a dead link.
+      // Give it a fresh window from activation time, without overriding a
+      // future expiry that was extended manually while still a draft.
+      const effectiveExpiry = (updateData.expiresAt as Date | undefined) ?? survey.expiresAt;
+      if (effectiveExpiry.getTime() <= Date.now()) {
+        const days = Number(expiresInDays) > 0 ? Number(expiresInDays) : 7;
+        updateData.expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      }
     }
   }
 
