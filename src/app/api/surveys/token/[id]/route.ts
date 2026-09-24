@@ -30,14 +30,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!survey) return NextResponse.json({ error: "Survey not found" }, { status: 404 });
     if (survey.status === "COMPLETED") return NextResponse.json({ error: "Already completed" }, { status: 410 });
     if (survey.status === "DRAFT") return NextResponse.json({ error: "Survey not yet active" }, { status: 410 });
-    if (survey.expiresAt < new Date()) return NextResponse.json({ error: "Survey expired" }, { status: 410 });
+    if (survey.status === "EXPIRED") return NextResponse.json({ error: "Survey expired" }, { status: 410 });
     surveyId = survey.id;
   }
 
   const survey = await db.select().from(surveys).where(eq(surveys.id, surveyId)).get();
   if (!survey) return NextResponse.json({ error: "Survey not found" }, { status: 404 });
   if (survey.status === "DRAFT") return NextResponse.json({ error: "Survey not yet active" }, { status: 410 });
-  if (survey.expiresAt < new Date()) return NextResponse.json({ error: "Survey expired" }, { status: 410 });
+  if (survey.status === "EXPIRED") return NextResponse.json({ error: "Survey expired" }, { status: 410 });
 
   const questions = (await db
     .select()
@@ -78,13 +78,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!survey) return NextResponse.json({ error: "Survey not found" }, { status: 404 });
     if (survey.status === "COMPLETED") return NextResponse.json({ error: "Already completed" }, { status: 410 });
     if (survey.status === "DRAFT") return NextResponse.json({ error: "Survey not yet active" }, { status: 410 });
-    if (survey.expiresAt < new Date()) return NextResponse.json({ error: "Survey expired" }, { status: 410 });
+    if (survey.status === "EXPIRED") return NextResponse.json({ error: "Survey expired" }, { status: 410 });
     surveyId = survey.id;
   }
 
   const survey = await db.select().from(surveys).where(eq(surveys.id, surveyId)).get();
   if (!survey) return NextResponse.json({ error: "Survey not found" }, { status: 404 });
-  if (survey.expiresAt < new Date()) return NextResponse.json({ error: "Survey expired" }, { status: 410 });
+  if (survey.status === "EXPIRED") return NextResponse.json({ error: "Survey expired" }, { status: 410 });
 
   const body = await req.json();
   const { answers, respondentName, respondentEmail, respondentCompany } = body;

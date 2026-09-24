@@ -89,7 +89,7 @@ export default function SurveyPage() {
   }
 
   if (status === "completed") return <StatusScreen icon="✓" color="green" title="Survei Sudah Diisi" message="Terima kasih! Anda sudah mengisi survei ini sebelumnya." />;
-  if (status === "expired") return <StatusScreen icon="⏱" color="gray" title="Survei Kadaluarsa" message="Link survei ini sudah tidak aktif. Silakan hubungi tim kami." />;
+  if (status === "expired") return <StatusScreen icon="⏱" color="gray" title="Survei Sudah Ditutup" message="Link survei ini sudah ditutup oleh tim kami. Silakan hubungi tim kami jika perlu diaktifkan kembali." />;
   if (status === "draft") return <StatusScreen icon="⚙" color="gray" title="Survei Belum Aktif" message="Survei ini belum dikirimkan oleh tim. Silakan tunggu atau hubungi Customer Service." />;
   if (status === "error") return <StatusScreen icon="✕" color="red" title="Survei Tidak Ditemukan" message="Link survei tidak valid. Pastikan Anda menggunakan link yang benar." />;
 

@@ -73,7 +73,7 @@ const statusColor: Record<string, string> = {
   EXPIRED: "bg-red-100 text-red-600",
 };
 const statusLabel: Record<string, string> = {
-  DRAFT: "Draft", SENT: "Aktif", COMPLETED: "Selesai", EXPIRED: "Kadaluarsa",
+  DRAFT: "Draft", SENT: "Aktif", COMPLETED: "Selesai", EXPIRED: "Ditutup",
 };
 const followUpLabel: Record<string, string> = {
   NONE: "OK",
@@ -179,7 +179,7 @@ function QuestionRow({
 
 function StatusFlow({ current }: { current: string }) {
   const steps = ["DRAFT", "SENT", "COMPLETED"];
-  if (current === "EXPIRED") return <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-600 rounded-full">Kadaluarsa</span>;
+  if (current === "EXPIRED") return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">Ditutup</span>;
   return (
     <div className="flex items-center gap-1">
       {steps.map((step, i) => {
@@ -475,6 +475,15 @@ export default function SurveyDetailPage() {
   // Once SENT, mode is locked — no adding recipients to UMUM, no magic link on PER_ORANG
   const modeLocked = !isDraft;
 
+  // Timeline indicators — the deadline is a target/reminder, not a hard stop.
+  // A survey stays open until someone closes it (status EXPIRED) or all recipients are done.
+  const nowMs = Date.now();
+  const targetMs = new Date(survey.expiresAt).getTime();
+  const runningDays = Math.max(0, Math.floor((nowMs - new Date(survey.createdAt).getTime()) / 86400000));
+  const daysToTarget = Math.ceil((targetMs - nowMs) / 86400000);
+  const overdueDays = Math.floor((nowMs - targetMs) / 86400000);
+  const isOverdue = isSent && targetMs <= nowMs;
+
   return (
     <div className="max-w-3xl">
       <div className="mb-4">
@@ -502,6 +511,34 @@ export default function SurveyDetailPage() {
           </div>
         </div>
         <StatusFlow current={survey.status} />
+        {(isSent || survey.status === "EXPIRED" || survey.status === "COMPLETED") && (
+          <div className="flex flex-wrap items-center gap-2 mt-3 text-xs">
+            {isSent && (
+              <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
+                Berjalan {runningDays} hari
+              </span>
+            )}
+            {isSent && (isOverdue ? (
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">
+                Lewat target {overdueDays} hari — target {formatDate(survey.expiresAt)}
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                Target tutup {formatDate(survey.expiresAt)} · {daysToTarget} hari lagi
+              </span>
+            ))}
+            {survey.status === "EXPIRED" && (
+              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                Ditutup {formatDate(survey.expiresAt)}
+              </span>
+            )}
+            {survey.status === "COMPLETED" && (
+              <span className="px-2 py-0.5 rounded-full bg-green-50 text-green-700 font-medium">
+                Selesai · {survey.responses.length} respons
+              </span>
+            )}
+          </div>
+        )}
         {survey.notes && <div className="mt-3 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-600"><span className="text-xs text-gray-400 font-medium">Catatan: </span>{survey.notes}</div>}
 
         {/* Edit info */}
@@ -514,7 +551,7 @@ export default function SurveyDetailPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none resize-none" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Perpanjang kadaluarsa (hari dari sekarang)</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Ubah target tutup (hari dari sekarang)</label>
               <input type="number" min={1} max={30} value={editDays} onChange={(e) => setEditDays(Number(e.target.value))}
                 className="w-40 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-400 outline-none" />
             </div>
@@ -640,7 +677,7 @@ export default function SurveyDetailPage() {
             <div className="text-xs text-blue-700 mb-2">Magic Link untuk distribusi publik — dapat diisi berkali-kali oleh siapa saja</div>
             <code className="block text-xs text-blue-900 bg-white rounded px-3 py-2 break-all border border-blue-200">{surveyUrl}</code>
             <div className="text-xs text-blue-600 mt-2">
-              Aktif hingga: {formatDate(survey.expiresAt)}
+              Target tutup: {formatDate(survey.expiresAt)} — link tetap aktif sampai survei ditutup.
             </div>
           </div>
         )}
@@ -661,6 +698,11 @@ export default function SurveyDetailPage() {
                 : <>Draft belum aktif. Sudah ada penerima terdaftar. Susun pertanyaan lalu aktifkan survei.</>
               : <>Draft belum aktif. Tambahkan penerima spesifik di bawah untuk survei per orang, atau susun pertanyaan lalu klik <strong>"Aktifkan Link"</strong> untuk survei umum.</>
             }
+          </div>
+        )}
+        {isSent && isOverdue && (
+          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+            Link survei <strong>masih aktif</strong> walau target tutup ({formatDate(survey.expiresAt)}) sudah lewat. Tutup manual dengan tombol <strong>Tutup Survei</strong>, atau geser targetnya lewat <strong>Perpanjang</strong>.
           </div>
         )}
       </div>

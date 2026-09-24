@@ -29,8 +29,25 @@ const statusLabel: Record<string, string> = {
   DRAFT: "Draft",
   SENT: "Aktif",
   COMPLETED: "Selesai",
-  EXPIRED: "Kadaluarsa",
+  EXPIRED: "Ditutup",
 };
+
+// Deadline is a target/reminder, not a hard stop — a survey stays open until it is closed.
+function timelineBadge(s: Survey): { text: string; cls: string } {
+  const targetMs = new Date(s.expiresAt).getTime();
+  const now = Date.now();
+  if (s.status === "EXPIRED") return { text: `Ditutup ${formatDate(s.expiresAt)}`, cls: "bg-gray-100 text-gray-600" };
+  if (s.status === "COMPLETED") return { text: "Selesai", cls: "bg-green-50 text-green-700" };
+  if (s.status === "SENT") {
+    if (targetMs <= now) {
+      const od = Math.floor((now - targetMs) / 86400000);
+      return { text: od >= 1 ? `Lewat target ${od} hari` : "Lewat target hari ini", cls: "bg-amber-100 text-amber-800" };
+    }
+    const left = Math.ceil((targetMs - now) / 86400000);
+    return { text: `Target ${formatDate(s.expiresAt)} · ${left} hari lagi`, cls: "bg-gray-100 text-gray-600" };
+  }
+  return { text: `Target ${formatDate(s.expiresAt)}`, cls: "bg-gray-100 text-gray-500" };
+}
 
 const statusIcon: Record<string, string> = {
   DRAFT: "○",
@@ -160,11 +177,11 @@ export default function CSDashboard() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                   {s.status === "EXPIRED"
-                    ? <span className="px-2 py-0.5 rounded-full font-medium bg-red-100 text-red-600">Kadaluarsa</span>
+                    ? <span className="px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">Ditutup</span>
                     : <StatusFlow current={s.status} />
                   }
                   {s.createdByName && <span className="text-gray-400">· {s.createdByName}</span>}
-                  <span className="text-gray-400">· {formatDate(s.expiresAt)}</span>
+                  <span className={`px-2 py-0.5 rounded-full font-medium ${timelineBadge(s).cls}`}>{timelineBadge(s).text}</span>
                 </div>
                 {s.notes && <div className="mt-1 text-xs text-gray-400 truncate">{s.notes}</div>}
               </div>
@@ -179,7 +196,7 @@ export default function CSDashboard() {
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Klien / Proyek</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Alur Status</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Pembuat</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Kadaluarsa</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Target / Status</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Catatan</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600">Aksi</th>
                 </tr>
@@ -193,12 +210,14 @@ export default function CSDashboard() {
                     </td>
                     <td className="px-4 py-3">
                       {s.status === "EXPIRED"
-                        ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600">Kadaluarsa</span>
+                        ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Ditutup</span>
                         : <StatusFlow current={s.status} />
                       }
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{s.createdByName || "—"}</td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(s.expiresAt)}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${timelineBadge(s).cls}`}>{timelineBadge(s).text}</span>
+                    </td>
                     <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{s.notes || "—"}</td>
                     <td className="px-4 py-3">
                       <Link href={`/dashboard/cs/surveys/${s.id}`}
